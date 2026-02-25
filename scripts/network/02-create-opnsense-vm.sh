@@ -189,8 +189,8 @@ printf "  %-18s  %s\n" "CPU type:"      "host"
 printf "  %-18s  %s\n" "OS type:"       "other (FreeBSD/HardenedBSD)"
 printf "  %-18s  %s\n" "Disk:"          "${VM_STORAGE}:${VM_DISK_GB}G  (virtio-scsi)"
 printf "  %-18s  %s\n" "ISO:"           "$ISO_NAME"
-printf "  %-18s  %s\n" "Serial:"        "socket  (required for qm terminal)"
-printf "  %-18s  %s\n" "VGA:"           "serial0"
+printf "  %-18s  %s\n" "Serial:"        "socket  (enables qm terminal after install)"
+printf "  %-18s  %s\n" "VGA:"           "std  (noVNC via web UI — use for installation)"
 printf "  %-18s  %s\n" "Boot:"          "CDROM first (change to disk after install)"
 printf "  %-18s  %s\n" "Start on boot:" "yes"
 echo ""
@@ -217,7 +217,7 @@ qm create "$VMID" \
     --ostype      other \
     --scsihw      virtio-scsi-pci \
     --serial0     socket \
-    --vga         serial0 \
+    --vga         std \
     --cdrom       "${ISO_REF}" \
     --boot        order=ide2 \
     --net0        "virtio,bridge=vmbr1,firewall=0" \
@@ -253,8 +253,10 @@ echo "  1. Start the VM:"
 echo "       qm start ${VMID}"
 echo ""
 echo "  2. Open the console to run the OPNsense installer:"
-echo "       qm terminal ${VMID}"
-echo "     Or use the Proxmox web UI: VM ${VMID} → Console"
+echo "       Proxmox web UI → VM ${VMID} → Console  (noVNC)"
+echo "       Do NOT use 'qm terminal' during installation — use the web UI console."
+echo "       After OPNsense is installed it outputs to serial, so"
+echo "       'qm terminal ${VMID}' will work for ongoing administration."
 echo ""
 echo "  3. Complete the OPNsense installer:"
 echo "       - Select UFS (default) and accept remaining defaults"
