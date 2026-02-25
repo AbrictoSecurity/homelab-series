@@ -1,23 +1,24 @@
 #!/bin/bash
 # Script:      03-opnsense-configure.sh
-# Description: Configures OPNsense post-install via the REST API.
-#              Enables and names the DMZ (OPT1) interface, then creates
-#              three baseline firewall rules:
-#                Allow Internal (LAN) → WAN
-#                Block  Internal (LAN) → DMZ
-#                Block  DMZ → Internal (LAN)
+# Description: Two-phase script run on the Proxmox host.
+#              Phase 0 — Creates a Debian 12 LXC on vmbr2 (Internal) as the
+#                        permanent internal admin machine for web GUI access.
+#              Phase 1 — Configures OPNsense post-install via the REST API:
+#                        enables and names the DMZ (OPT1) interface, then
+#                        creates three baseline firewall rules:
+#                          Allow Internal (LAN) → WAN
+#                          Block  Internal (LAN) → DMZ
+#                          Block  DMZ → Internal (LAN)
 # Blog post:   https://abrictosecurity.com/homelab-series-network-architecture
 # Usage:       bash 03-opnsense-configure.sh <api_key> <api_secret>
-# Run from:    Any host on the Internal network (10.10.10.0/24) that can
-#              reach the OPNsense LAN interface at 10.10.10.1
-# Dependencies: curl
+# Run from:    Proxmox host (root) — requires pct and curl
+# Dependencies: pct (Proxmox LXC), pveam (template manager), curl
 #
 # SECURITY NOTE: API credentials are passed as command-line arguments.
 # On a shared system, arguments are visible in process listings (ps aux).
-# On a single-user homelab host this is acceptable. Avoid recording this
-# command in a shared shell history file. Run:
+# On a single-user homelab host this is acceptable. To prevent the
+# credentials from being written to ~/.bash_history, run:
 #   unset HISTFILE && bash 03-opnsense-configure.sh <key> <secret>
-# to prevent the credentials from being written to ~/.bash_history.
 
 set -euo pipefail
 
@@ -35,8 +36,17 @@ ok()      { echo -e "${GREEN}[OK]${RESET}    $*"; }
 warn()    { echo -e "${YELLOW}[WARN]${RESET}  $*"; }
 die()     { echo -e "${RED}[ERROR]${RESET} $*" >&2; exit 1; }
 
+# ─── Root check ───────────────────────────────────────────────────────────────
+[[ $EUID -ne 0 ]] && die "Must be run as root.  Try: sudo bash $0"
+
 # ─── Dependency check ─────────────────────────────────────────────────────────
-command -v curl &>/dev/null || die "curl not found. Install with: apt install curl -y"
+command -v curl  &>/dev/null || die "curl not found. Install with: apt install curl -y"
+command -v pct   &>/dev/null || die "pct not found. Is this a Proxmox VE host?"
+command -v pveam &>/dev/null || die "pveam not found. Is this a Proxmox VE host?"
+
+# ─── Prerequisite: Internal bridge must exist ─────────────────────────────────
+ip link show vmbr2 &>/dev/null \
+    || die "vmbr2 not found. Run 01-create-bridges.sh first."
 
 # ─── Credential arguments ─────────────────────────────────────────────────────
 # Generate in OPNsense: System → Access → Users → admin → API Keys → +
@@ -48,8 +58,8 @@ AUTH="${API_KEY}:${API_SECRET}"
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
 echo -e "${BOLD}║     Abricto HomeLab — 03-opnsense-configure.sh          ║${RESET}"
-echo -e "${BOLD}║  Configures DMZ interface and baseline firewall rules   ║${RESET}"
-echo -e "${BOLD}║  via the OPNsense REST API                              ║${RESET}"
+echo -e "${BOLD}║  Phase 0: Create internal admin LXC on vmbr2            ║${RESET}"
+echo -e "${BOLD}║  Phase 1: Configure DMZ interface + firewall rules      ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 warn "SSL certificate verification is skipped (-k) because OPNsense"
@@ -57,8 +67,8 @@ warn "uses a self-signed certificate until Let's Encrypt is configured."
 warn "This is addressed in Post 3 of the HomeLab Series."
 echo ""
 
-# ─── Interactive configuration ────────────────────────────────────────────────
-echo -e "${BOLD}Configuration${RESET}"
+# ─── Shared network configuration prompts ─────────────────────────────────────
+echo -e "${BOLD}Network Configuration${RESET}"
 echo ""
 
 read -r -p "  OPNsense LAN IP [10.10.10.1]: " OPNSENSE_IP
@@ -70,13 +80,180 @@ LAN_SUBNET="${LAN_SUBNET:-10.10.10.0/24}"
 read -r -p "  DMZ subnet [10.20.20.0/24]: " DMZ_SUBNET
 DMZ_SUBNET="${DMZ_SUBNET:-10.20.20.0/24}"
 
-echo ""
+# Derive subnet mask and a host-side temp IP (.254) for the Proxmox bridge
+LAN_MASK=$(echo "$LAN_SUBNET" | cut -d/ -f2)
+HOST_BRIDGE_IP=$(echo "$OPNSENSE_IP" | sed 's/\.[0-9]*$/.254')
 
 BASE_URL="https://${OPNSENSE_IP}/api"
+echo ""
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHASE 0 — Internal admin LXC
+# ═══════════════════════════════════════════════════════════════════════════════
+echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}║  Phase 0 — Internal Admin LXC                           ║${RESET}"
+echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
+echo ""
+echo "  A lightweight Debian 12 LXC on vmbr2 gives you a persistent machine"
+echo "  on the Internal network to access the OPNsense web GUI and run"
+echo "  future scripts from inside the lab."
+echo ""
+read -r -p "  Create internal admin LXC now? [Y/n]: " CREATE_LXC
+CREATE_LXC="${CREATE_LXC:-y}"
+CREATE_LXC="${CREATE_LXC,,}"
+
+LXC_CTID=""
+
+if [[ "$CREATE_LXC" == "y" || "$CREATE_LXC" == "yes" ]]; then
+
+    echo ""
+
+    # ── LXC configuration prompts ──────────────────────────────────────────────
+    while true; do
+        read -r -p "  Container ID [110]: " LXC_CTID
+        LXC_CTID="${LXC_CTID:-110}"
+        [[ "$LXC_CTID" =~ ^[0-9]+$ ]] || { warn "CT ID must be a number."; continue; }
+        if pct status "$LXC_CTID" &>/dev/null; then
+            warn "CT ID ${LXC_CTID} already exists. Choose a different ID."
+            continue
+        fi
+        break
+    done
+
+    read -r -p "  Hostname [admin-internal]: " LXC_HOSTNAME
+    LXC_HOSTNAME="${LXC_HOSTNAME:-admin-internal}"
+
+    read -r -p "  Static IP for LXC [10.10.10.10]: " LXC_IP
+    LXC_IP="${LXC_IP:-10.10.10.10}"
+
+    read -r -p "  Storage pool [local-lvm]: " LXC_STORAGE
+    LXC_STORAGE="${LXC_STORAGE:-local-lvm}"
+
+    read -r -s -p "  Root password for LXC: " LXC_PASS
+    echo ""
+    read -r -s -p "  Confirm password: " LXC_PASS2
+    echo ""
+    [[ "$LXC_PASS" == "$LXC_PASS2" ]] || die "Passwords do not match."
+    [[ -n "$LXC_PASS" ]]              || die "Password cannot be empty."
+    echo ""
+
+    # ── Template discovery ────────────────────────────────────────────────────
+    info "Searching for Debian 12 template ..."
+
+    TEMPLATE_PATH=$(find /var/lib/vz/template/cache/ \
+        -maxdepth 1 -name "debian-12-standard*.tar.*" 2>/dev/null \
+        | sort -V | tail -1)
+
+    if [[ -z "$TEMPLATE_PATH" ]]; then
+        info "No Debian 12 template found locally. Fetching template list ..."
+        pveam update &>/dev/null
+
+        TEMPLATE_NAME=$(pveam available --section system 2>/dev/null \
+            | awk '{print $2}' \
+            | grep "^debian-12-standard" \
+            | sort -V | tail -1)
+
+        [[ -n "$TEMPLATE_NAME" ]] \
+            || die "No Debian 12 template available. Check internet connectivity on the host."
+
+        info "Downloading ${TEMPLATE_NAME} ..."
+        pveam download local "$TEMPLATE_NAME"
+
+        TEMPLATE_PATH=$(find /var/lib/vz/template/cache/ \
+            -maxdepth 1 -name "debian-12-standard*.tar.*" 2>/dev/null \
+            | sort -V | tail -1)
+    fi
+
+    TEMPLATE_REF="local:vztmpl/$(basename "$TEMPLATE_PATH")"
+    ok "Template: $(basename "$TEMPLATE_PATH")"
+    echo ""
+
+    # ── Confirmation ──────────────────────────────────────────────────────────
+    echo -e "${BOLD}──────────────────────────────────────────────────────────${RESET}"
+    echo -e "${BOLD}LXC Summary:${RESET}"
+    echo ""
+    printf "  %-18s  %s\n" "Container ID:"  "$LXC_CTID"
+    printf "  %-18s  %s\n" "Hostname:"      "$LXC_HOSTNAME"
+    printf "  %-18s  %s\n" "IP:"            "${LXC_IP}/${LAN_MASK}"
+    printf "  %-18s  %s\n" "Gateway:"       "$OPNSENSE_IP"
+    printf "  %-18s  %s\n" "Bridge:"        "vmbr2 (Internal)"
+    printf "  %-18s  %s\n" "Storage:"       "$LXC_STORAGE:4G"
+    printf "  %-18s  %s\n" "Memory:"        "512 MB"
+    printf "  %-18s  %s\n" "Template:"      "$(basename "$TEMPLATE_PATH")"
+    echo ""
+    echo -e "${BOLD}──────────────────────────────────────────────────────────${RESET}"
+    echo ""
+    read -r -p "  Create this LXC? [y/N]: " CONFIRM_LXC
+    CONFIRM_LXC="${CONFIRM_LXC,,}"
+    [[ "$CONFIRM_LXC" == "y" || "$CONFIRM_LXC" == "yes" ]] \
+        || { info "LXC creation skipped."; LXC_CTID=""; }
+
+    if [[ -n "$LXC_CTID" ]]; then
+        info "Creating LXC ${LXC_CTID} (${LXC_HOSTNAME}) ..."
+
+        pct create "$LXC_CTID" "$TEMPLATE_REF" \
+            --hostname    "$LXC_HOSTNAME" \
+            --memory      512 \
+            --cores       1 \
+            --rootfs      "${LXC_STORAGE}:4" \
+            --net0        "name=eth0,bridge=vmbr2,ip=${LXC_IP}/${LAN_MASK},gw=${OPNSENSE_IP}" \
+            --nameserver  "$OPNSENSE_IP" \
+            --password    "$LXC_PASS" \
+            --unprivileged 1 \
+            --onboot      1
+        ok "LXC created."
+
+        info "Starting LXC ${LXC_CTID} ..."
+        pct start "$LXC_CTID"
+
+        # Wait for network to initialise inside the container
+        info "Waiting for LXC network to come up ..."
+        for i in {1..15}; do
+            if pct exec "$LXC_CTID" -- ping -c1 -W1 "$OPNSENSE_IP" &>/dev/null; then
+                ok "LXC can reach OPNsense at ${OPNSENSE_IP}."
+                break
+            fi
+            [[ $i -eq 15 ]] \
+                && warn "LXC network not confirmed after 15s — continuing anyway. Check with: pct exec ${LXC_CTID} -- ping ${OPNSENSE_IP}"
+            sleep 1
+        done
+        echo ""
+    fi
+fi
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHASE 1 — OPNsense API configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
+echo -e "${BOLD}║  Phase 1 — OPNsense API Configuration                   ║${RESET}"
+echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
+echo ""
+
+# ── Temporarily add host IP to vmbr2 so the host can reach OPNsense ──────────
+# The Proxmox host is the bridge (vmbr2) but has no IP on the Internal network.
+# We add a temporary .254 address so curl can reach 10.10.10.1 for API calls.
+# A trap removes it on exit regardless of success or failure.
+BRIDGE_IP_ADDED=false
+
+cleanup_bridge_ip() {
+    if $BRIDGE_IP_ADDED; then
+        ip addr del "${HOST_BRIDGE_IP}/${LAN_MASK}" dev vmbr2 2>/dev/null || true
+        info "Removed temporary host IP ${HOST_BRIDGE_IP} from vmbr2."
+    fi
+}
+trap cleanup_bridge_ip EXIT
+
+if ! ip addr show vmbr2 | grep -q "${HOST_BRIDGE_IP}"; then
+    info "Adding temporary host IP ${HOST_BRIDGE_IP}/${LAN_MASK} to vmbr2 for API access ..."
+    ip addr add "${HOST_BRIDGE_IP}/${LAN_MASK}" dev vmbr2
+    BRIDGE_IP_ADDED=true
+    ok "Host IP added. Will be removed automatically on script exit."
+else
+    info "Host IP ${HOST_BRIDGE_IP} already present on vmbr2 — skipping."
+fi
+echo ""
 
 # ─── Helper: API call with response check ─────────────────────────────────────
-# Usage: api_call <METHOD> <endpoint> [json_body]
-# Returns the response body; exits on HTTP error or empty response.
 api_call() {
     local method="$1"
     local endpoint="$2"
@@ -93,7 +270,8 @@ api_call() {
             "${BASE_URL}${endpoint}" 2>&1) || die "curl failed on ${endpoint}"
     fi
 
-    [[ -z "$response" ]] && die "Empty response from ${endpoint} — check OPNsense is reachable and API is enabled."
+    [[ -z "$response" ]] \
+        && die "Empty response from ${endpoint} — is OPNsense running and the API enabled?\n       OPNsense: System → Settings → Administration → Enable API"
     echo "$response"
 }
 
@@ -108,14 +286,14 @@ if echo "$response" | grep -q '"product_name"'; then
 elif echo "$response" | grep -qi "unauthorized\|403\|401"; then
     die "Authentication failed. Verify the API key and secret.\n       OPNsense: System → Access → Users → admin → API Keys"
 else
-    die "Unexpected response from API. Is OPNsense running and reachable at ${OPNSENSE_IP}?\n       Response: ${response}"
+    die "Unexpected API response. Is OPNsense running at ${OPNSENSE_IP}?\n       Response: ${response}"
 fi
 echo ""
 
 # ─── Step 2: Enable and name the DMZ interface (OPT1 / vtnet2) ───────────────
 echo -e "${BOLD}Step 1 of 3 — Configure DMZ interface${RESET}"
 echo ""
-info "Enabling OPT1 interface and setting description to 'DMZ' ..."
+info "Enabling OPT1 and setting description to 'DMZ' ..."
 
 response=$(api_call POST "/interfaces/overview/setInterfaceIdentifier" \
     '{"identifier": "opt1", "description": "DMZ"}')
@@ -123,7 +301,7 @@ response=$(api_call POST "/interfaces/overview/setInterfaceIdentifier" \
 if echo "$response" | grep -qi '"result"\s*:\s*"saved"\|"status"\s*:\s*"ok"'; then
     ok "DMZ interface configured."
 else
-    warn "Unexpected response — verify OPT1 in OPNsense UI (Interfaces → Assignments)."
+    warn "Unexpected response — verify OPT1 in OPNsense: Interfaces → Assignments."
     warn "Response: ${response}"
 fi
 
@@ -142,14 +320,14 @@ printf "  ${GREEN}%-8s${RESET}  %-10s  %-22s  %-22s  %s\n" \
 printf "  %-8s  %-10s  %-22s  %-22s  %s\n" \
     "────────" "──────────" "──────────────────────" "──────────────────────" "────────────────────────"
 printf "  ${GREEN}%-8s${RESET}  %-10s  %-22s  %-22s  %s\n" \
-    "PASS" "LAN in" "$LAN_SUBNET" "any" "Allow Internal to WAN"
+    "PASS"  "LAN in"  "$LAN_SUBNET" "any"          "Allow Internal to WAN"
 printf "  ${RED}%-8s${RESET}  %-10s  %-22s  %-22s  %s\n" \
-    "BLOCK" "LAN in" "$LAN_SUBNET" "$DMZ_SUBNET" "Block Internal to DMZ"
+    "BLOCK" "LAN in"  "$LAN_SUBNET" "$DMZ_SUBNET"  "Block Internal to DMZ"
 printf "  ${RED}%-8s${RESET}  %-10s  %-22s  %-22s  %s\n" \
-    "BLOCK" "OPT1 in" "$DMZ_SUBNET" "$LAN_SUBNET" "Block DMZ to Internal"
+    "BLOCK" "OPT1 in" "$DMZ_SUBNET" "$LAN_SUBNET"  "Block DMZ to Internal"
 echo ""
 
-read -r -p "Create these rules? [y/N]: " CONFIRM
+read -r -p "  Create these rules? [y/N]: " CONFIRM
 CONFIRM="${CONFIRM,,}"
 [[ "$CONFIRM" == "y" || "$CONFIRM" == "yes" ]] \
     || { info "Aborted. No rules were created."; exit 0; }
@@ -157,7 +335,6 @@ echo ""
 
 # ── Rule 1: Allow LAN → WAN ───────────────────────────────────────────────────
 info "Creating rule: Allow Internal → WAN ..."
-
 response=$(api_call POST "/firewall/filter/addRule" \
     "{
         \"rule\": {
@@ -175,7 +352,6 @@ response=$(api_call POST "/firewall/filter/addRule" \
             \"description\":     \"HomeLab: Allow Internal to WAN\"
         }
     }")
-
 if echo "$response" | grep -q '"uuid"'; then
     rule1_uuid=$(echo "$response" | grep -o '"uuid":"[^"]*"' | cut -d'"' -f4)
     ok "Rule created (uuid: ${rule1_uuid})"
@@ -185,7 +361,6 @@ fi
 
 # ── Rule 2: Block LAN → DMZ ───────────────────────────────────────────────────
 info "Creating rule: Block Internal → DMZ ..."
-
 response=$(api_call POST "/firewall/filter/addRule" \
     "{
         \"rule\": {
@@ -203,7 +378,6 @@ response=$(api_call POST "/firewall/filter/addRule" \
             \"description\":     \"HomeLab: Block Internal to DMZ\"
         }
     }")
-
 if echo "$response" | grep -q '"uuid"'; then
     rule2_uuid=$(echo "$response" | grep -o '"uuid":"[^"]*"' | cut -d'"' -f4)
     ok "Rule created (uuid: ${rule2_uuid})"
@@ -213,7 +387,6 @@ fi
 
 # ── Rule 3: Block DMZ → LAN ───────────────────────────────────────────────────
 info "Creating rule: Block DMZ → Internal ..."
-
 response=$(api_call POST "/firewall/filter/addRule" \
     "{
         \"rule\": {
@@ -231,7 +404,6 @@ response=$(api_call POST "/firewall/filter/addRule" \
             \"description\":     \"HomeLab: Block DMZ to Internal\"
         }
     }")
-
 if echo "$response" | grep -q '"uuid"'; then
     rule3_uuid=$(echo "$response" | grep -o '"uuid":"[^"]*"' | cut -d'"' -f4)
     ok "Rule created (uuid: ${rule3_uuid})"
@@ -244,43 +416,59 @@ echo ""
 echo -e "${BOLD}Step 3 of 3 — Apply changes${RESET}"
 echo ""
 info "Applying firewall rules ..."
-
 api_call POST "/firewall/filter/apply" > /dev/null
 ok "Firewall rules applied."
 echo ""
 
 # ─── Verify ───────────────────────────────────────────────────────────────────
-info "Fetching applied rule count to confirm ..."
+info "Fetching applied rule count ..."
 response=$(api_call GET "/firewall/filter/searchRule")
 rule_count=$(echo "$response" | grep -o '"total":[0-9]*' | grep -o '[0-9]*' || echo "unknown")
 ok "OPNsense reports ${rule_count} total firewall rule(s) active."
 echo ""
 
-# ─── Result ───────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Result
+# ═══════════════════════════════════════════════════════════════════════════════
 echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${GREEN}${BOLD}║   OPNsense baseline configuration complete.             ║${RESET}"
+echo -e "${GREEN}${BOLD}║   Phase 0 + Phase 1 complete.                           ║${RESET}"
 echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
-echo -e "${BOLD}Verify in the OPNsense web UI:${RESET}"
+
+if [[ -n "$LXC_CTID" ]]; then
+    echo -e "${BOLD}Internal admin LXC:${RESET}"
+    echo "  CT ID:     ${LXC_CTID}  (${LXC_HOSTNAME})"
+    echo "  IP:        ${LXC_IP}/${LAN_MASK}  on vmbr2"
+    echo "  Access:    pct enter ${LXC_CTID}     (console from Proxmox host)"
+    echo "             ssh root@${LXC_IP}        (SSH from Internal network)"
+    echo ""
+    echo -e "${BOLD}Accessing the OPNsense web GUI from your laptop:${RESET}"
+    echo ""
+    echo "  Option 1 — SSH tunnel (recommended):"
+    echo "    Run on your laptop:"
+    echo "      ssh -L 8443:${OPNSENSE_IP}:443 root@<proxmox-mgmt-ip> -N"
+    echo "    Then open: https://localhost:8443"
+    echo ""
+    echo "  Option 2 — from inside the LXC:"
+    echo "    pct enter ${LXC_CTID}"
+    echo "    curl -sk https://${OPNSENSE_IP} | grep -i opnsense"
+    echo ""
+fi
+
+echo -e "${BOLD}Verify in the OPNsense web UI (https://${OPNSENSE_IP}):${RESET}"
 echo ""
-echo "  Interfaces  → https://${OPNSENSE_IP} → Interfaces → Assignments"
-echo "    OPT1 should appear as 'DMZ' and show as enabled"
+echo "  Interfaces → Assignments   OPT1 shows as 'DMZ' and is enabled"
+echo "  Firewall → Rules → LAN     Allow Internal to WAN  (pass)"
+echo "                             Block Internal to DMZ  (block)"
+echo "  Firewall → Rules → DMZ     Block DMZ to Internal  (block)"
 echo ""
-echo "  Firewall    → https://${OPNSENSE_IP} → Firewall → Rules → LAN"
-echo "    Allow Internal to WAN   (pass)"
-echo "    Block Internal to DMZ   (block)"
+echo -e "${BOLD}Post 2 connectivity verification:${RESET}"
+echo "  From the admin LXC (pct enter ${LXC_CTID:-<ctid>}):"
+echo "    ping -c3 ${OPNSENSE_IP}   → should succeed  (OPNsense LAN)"
+echo "    ping -c3 1.1.1.1          → should succeed  (internet via OPNsense)"
+echo "    ping -c3 10.20.20.1       → should fail     (DMZ blocked)"
 echo ""
-echo "               https://${OPNSENSE_IP} → Firewall → Rules → DMZ"
-echo "    Block DMZ to Internal   (block)"
-echo ""
-echo -e "${BOLD}Next steps:${RESET}"
-echo ""
-echo "  Post 2 verification — create a test LXC on vmbr2 and confirm:"
-echo "    ping 10.10.10.1   (OPNsense LAN — should succeed)"
-echo "    ping 1.1.1.1      (internet — should succeed)"
-echo "    ping 10.20.20.1   (DMZ gateway — should fail)"
-echo ""
-echo "  When verification passes, Post 2 is complete."
-echo "  Post 3 begins with: domain purchase → Cloudflare DNS → SSL certs"
+echo -e "${BOLD}Next:${RESET}"
+echo "  Post 3 — Domain → Cloudflare DNS → Let's Encrypt wildcard SSL"
 echo "  Repository: https://github.com/Cab00se-AS/homelab-series"
 echo ""
