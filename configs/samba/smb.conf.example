@@ -1,0 +1,32 @@
+# Samba AD DC — /etc/samba/smb.conf
+#
+# This is the reference smb.conf generated after running 08-samba-lxc.sh
+# and completing the Samba domain provisioning step.
+#
+# Do NOT copy this verbatim. The provisioning command generates the correct
+# smb.conf for your environment. This file is for reference only.
+#
+# Replace "yourname-lab.com", "CORP", and DC IP with your actual values.
+
+[global]
+    workgroup = CORP
+    realm = CORP.YOURNAME-LAB.COM
+    netbios name = DC01
+    server role = active directory domain controller
+    dns forwarder = 10.10.10.2          # Pi-hole handles upstream DNS
+
+    # Kerberos
+    kerberos method = secrets and keytab
+
+    # Logging
+    log file = /var/log/samba/log.%m
+    max log size = 1000
+    logging = file
+
+[sysvol]
+    path = /var/lib/samba/sysvol
+    read only = No
+
+[netlogon]
+    path = /var/lib/samba/sysvol/corp.yourname-lab.com/scripts
+    read only = No

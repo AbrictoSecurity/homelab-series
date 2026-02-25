@@ -1,0 +1,14 @@
+# Pi-hole Custom DNS — /etc/pihole/custom.list
+#
+# This file shows the local DNS A records added by 07-pihole-dns-records.sh.
+# Format: <IP>  <hostname>
+#
+# Copy to /etc/pihole/custom.list on your Pi-hole LXC, then restart Pi-hole:
+#   pihole restartdns
+#
+# Replace "yourname-lab.com" with your actual registered domain.
+
+192.168.1.100  proxmox.yourname-lab.com
+10.10.10.1     edge.yourname-lab.com
+10.10.10.2     pihole.yourname-lab.com
+10.10.10.3     dc01.corp.yourname-lab.com

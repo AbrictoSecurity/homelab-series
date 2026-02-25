@@ -1,0 +1,37 @@
+# /etc/network/interfaces — Proxmox bridge additions
+#
+# This file shows the bridge stanzas added by 01-create-bridges.sh.
+# Your existing vmbr0 (management) and physical NIC entries are preserved.
+#
+# Copy the relevant bridge blocks into your /etc/network/interfaces
+# and adjust the bridge_ports to match your physical NIC names.
+# Run: ip link show   to see your NIC names before editing.
+#
+# After editing, apply with:   ifreload -a   (or reboot)
+
+# vmbr1 — Edge (WAN) — connects to home router
+# OPNsense WAN interface (vtnet0) attaches here
+auto vmbr1
+iface vmbr1 inet manual
+        bridge-ports enp2s0f0      # Replace with your NIC name
+        bridge-stp off
+        bridge-fd 0
+        bridge-vlan-aware no
+
+# vmbr2 — Internal (LAN) — 10.10.10.0/24
+# OPNsense LAN interface (vtnet1) is the gateway at 10.10.10.1
+auto vmbr2
+iface vmbr2 inet manual
+        bridge-ports enp2s0f1      # Replace with your NIC name
+        bridge-stp off
+        bridge-fd 0
+        bridge-vlan-aware no
+
+# vmbr3 — DMZ — 10.20.20.0/24
+# OPNsense DMZ interface (vtnet2) is the gateway at 10.20.20.1
+auto vmbr3
+iface vmbr3 inet manual
+        bridge-ports enp2s0f2      # Replace with your NIC name
+        bridge-stp off
+        bridge-fd 0
+        bridge-vlan-aware no
