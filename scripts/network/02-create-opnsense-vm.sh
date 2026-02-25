@@ -219,7 +219,7 @@ qm create "$VMID" \
     --serial0     socket \
     --vga         std \
     --cdrom       "${ISO_REF}" \
-    --boot        order=scsi0;ide2 \
+    --boot        "order=scsi0;ide2" \
     --net0        "virtio,bridge=vmbr1,firewall=0" \
     --net1        "virtio,bridge=vmbr2,firewall=0" \
     --net2        "virtio,bridge=vmbr3,firewall=0" \
