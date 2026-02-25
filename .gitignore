@@ -1,0 +1,43 @@
+# ============================================================
+# homelab-series .gitignore
+# Commit this file FIRST — before any scripts, configs, or docs
+# NEVER relax these rules. If you think you need to commit a
+# secret, use a .env.example with placeholder values instead.
+# ============================================================
+
+# Secrets and credentials
+*.ini
+*.env
+.env*
+cloudflare.ini
+*credentials*
+*secret*
+*token*
+
+# Certificates and private keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.der
+*.csr
+
+# OS and editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Backup files created by scripts
+*.bak.*
+*.bak
+*.orig
+
+# Temporary files
+*.tmp
+/tmp/
