@@ -191,7 +191,7 @@ printf "  %-18s  %s\n" "Disk:"          "${VM_STORAGE}:${VM_DISK_GB}G  (virtio-s
 printf "  %-18s  %s\n" "ISO:"           "$ISO_NAME"
 printf "  %-18s  %s\n" "Serial:"        "socket  (enables qm terminal after install)"
 printf "  %-18s  %s\n" "VGA:"           "std  (noVNC via web UI — use for installation)"
-printf "  %-18s  %s\n" "Boot:"          "CDROM first (change to disk after install)"
+printf "  %-18s  %s\n" "Boot:"          "scsi0 (disk) → ide2 (CDROM fallback)"
 printf "  %-18s  %s\n" "Start on boot:" "yes"
 echo ""
 printf "  ${CYAN}%-18s${RESET}  %s\n" "net0 (vtnet0):" "virtio → vmbr1  [WAN]"
@@ -219,7 +219,7 @@ qm create "$VMID" \
     --serial0     socket \
     --vga         std \
     --cdrom       "${ISO_REF}" \
-    --boot        order=ide2 \
+    --boot        order=scsi0;ide2 \
     --net0        "virtio,bridge=vmbr1,firewall=0" \
     --net1        "virtio,bridge=vmbr2,firewall=0" \
     --net2        "virtio,bridge=vmbr3,firewall=0" \
@@ -271,7 +271,8 @@ echo ""
 echo "  5. Set the LAN IP at the console:"
 echo "       10.10.10.1/24   (no DHCP server — Pi-hole handles DHCP later)"
 echo ""
-echo "  6. Remove the ISO after install:"
+echo "  6. Remove the ISO after install (boot order already favours the disk — no"
+echo "     separate boot order change needed):"
 echo "       qm set ${VMID} --cdrom none"
 echo ""
 echo "  7. Run the next script (after OPNsense is installed and running):"
