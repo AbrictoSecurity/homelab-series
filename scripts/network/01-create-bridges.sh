@@ -37,9 +37,9 @@ BACKUP="${IFACES_FILE}.bak.$(date +%Y%m%d%H%M%S)"
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║        Abricto HomeLab — 01-create-bridges.sh           ║${RESET}"
-echo -e "${BOLD}║  Creates vmbr1 (Edge/WAN), vmbr2 (Internal), vmbr3 (DMZ)║${RESET}"
-echo -e "${BOLD}║  on Proxmox VE by appending to /etc/network/interfaces  ║${RESET}"
+echo -e "${BOLD}║        Abricto HomeLab — 01-create-bridges.sh            ║${RESET}"
+echo -e "${BOLD}║  Creates vmbr1 (Edge/WAN), vmbr2 (Internal), vmbr3 (DMZ) ║${RESET}"
+echo -e "${BOLD}║  on Proxmox VE by appending to /etc/network/interfaces   ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 warn "This script modifies ${IFACES_FILE}."
@@ -110,8 +110,10 @@ echo "  live here. OPNsense's LAN interface (vtnet1) is the gateway."
 echo ""
 read -r -p "  Physical NIC for vmbr2 [eno3]: " NIC_LAN
 NIC_LAN="${NIC_LAN:-eno3}"
-read -r -p "  Internal subnet (for reference comments only) [10.10.10.0/24]: " INTERNAL_SUBNET
+read -r -p "  Internal subnet [10.10.10.0/24]: " INTERNAL_SUBNET
 INTERNAL_SUBNET="${INTERNAL_SUBNET:-10.10.10.0/24}"
+read -r -p "  Proxmox host IP on vmbr2 [10.10.10.254]: " HOST_BRIDGE_IP
+HOST_BRIDGE_IP="${HOST_BRIDGE_IP:-10.10.10.254}"
 echo ""
 
 # ── vmbr3 — DMZ ───────────────────────────────────────────────────────────────
@@ -125,10 +127,11 @@ read -r -p "  DMZ subnet (for reference comments only) [10.20.20.0/24]: " DMZ_SU
 DMZ_SUBNET="${DMZ_SUBNET:-10.20.20.0/24}"
 echo ""
 
-# ─── Derive gateway IPs from subnets ─────────────────────────────────────────
+# ─── Derive gateway IPs and mask from subnets ────────────────────────────────
 # Strips the mask and last octet (e.g. 10.10.10.0/24 → 10.10.10.1).
-INTERNAL_GW="${INTERNAL_SUBNET%/*}"   # strip /24  → 10.10.10.0
-INTERNAL_GW="${INTERNAL_GW%.*}.1"    # strip .0   → 10.10.10.1
+LAN_MASK="${INTERNAL_SUBNET#*/}"     # strip prefix → 24
+INTERNAL_GW="${INTERNAL_SUBNET%/*}"  # strip /24   → 10.10.10.0
+INTERNAL_GW="${INTERNAL_GW%.*}.1"   # strip .0    → 10.10.10.1
 DMZ_GW="${DMZ_SUBNET%/*}"
 DMZ_GW="${DMZ_GW%.*}.1"
 
@@ -161,8 +164,8 @@ echo -e "${BOLD}Review before applying:${RESET}"
 echo ""
 printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  %s\n" \
     "vmbr1" "Edge (WAN)"     "$NIC_WAN" "no IP — L2 passthrough to home router"
-printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  gateway: ${BOLD}%s${RESET}\n" \
-    "vmbr2" "Internal (LAN)" "$NIC_LAN" "$INTERNAL_GW"
+printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  gateway: ${BOLD}%s${RESET}  host IP: ${BOLD}%s${RESET}\n" \
+    "vmbr2" "Internal (LAN)" "$NIC_LAN" "$INTERNAL_GW" "${HOST_BRIDGE_IP}/${LAN_MASK}"
 printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  gateway: ${BOLD}%s${RESET}\n" \
     "vmbr3" "DMZ"            "$NIC_DMZ" "$DMZ_GW"
 echo ""
@@ -201,8 +204,10 @@ iface vmbr1 inet manual
 
 # vmbr2 — Internal LAN (${INTERNAL_SUBNET})
 # OPNsense LAN interface (vtnet1) attaches here — gateway: ${INTERNAL_GW}
+# Proxmox host IP ${HOST_BRIDGE_IP}/${LAN_MASK} — used for API access and internal management
 auto vmbr2
-iface vmbr2 inet manual
+iface vmbr2 inet static
+        address ${HOST_BRIDGE_IP}/${LAN_MASK}
         bridge-ports ${NIC_LAN}
         bridge-stp off
         bridge-fd 0
@@ -247,7 +252,7 @@ echo ""
 # ─── Result ───────────────────────────────────────────────────────────────────
 if $all_ok; then
     echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${GREEN}${BOLD}║   All bridges created successfully.                     ║${RESET}"
+    echo -e "${GREEN}${BOLD}║          All bridges created successfully.               ║${RESET}"
     echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 else
     warn "One or more bridges did not come up cleanly."
