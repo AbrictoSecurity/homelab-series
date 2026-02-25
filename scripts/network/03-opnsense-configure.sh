@@ -22,6 +22,10 @@
 
 set -euo pipefail
 
+# ─── Abricto logo ─────────────────────────────────────────────────────────────
+# shellcheck source=../lib/logo.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/logo.sh" 2>/dev/null || true
+
 # ─── Colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
