@@ -126,9 +126,11 @@ DMZ_SUBNET="${DMZ_SUBNET:-10.20.20.0/24}"
 echo ""
 
 # ─── Derive gateway IPs from subnets ─────────────────────────────────────────
-# Replaces the last octet and mask (e.g. .0/24) with .1 for the comment block.
-INTERNAL_GW=$(echo "$INTERNAL_SUBNET" | sed 's/\.[0-9]*\/[0-9]*$/.1/')
-DMZ_GW=$(echo "$DMZ_SUBNET"      | sed 's/\.[0-9]*\/[0-9]*$/.1/')
+# Strips the mask and last octet (e.g. 10.10.10.0/24 → 10.10.10.1).
+INTERNAL_GW="${INTERNAL_SUBNET%/*}"   # strip /24  → 10.10.10.0
+INTERNAL_GW="${INTERNAL_GW%.*}.1"    # strip .0   → 10.10.10.1
+DMZ_GW="${DMZ_SUBNET%/*}"
+DMZ_GW="${DMZ_GW%.*}.1"
 
 # ─── Validate NIC names ───────────────────────────────────────────────────────
 for label_nic in "vmbr1:${NIC_WAN}" "vmbr2:${NIC_LAN}" "vmbr3:${NIC_DMZ}"; do

@@ -82,7 +82,7 @@ DMZ_SUBNET="${DMZ_SUBNET:-10.20.20.0/24}"
 
 # Derive subnet mask and a host-side temp IP (.254) for the Proxmox bridge
 LAN_MASK=$(echo "$LAN_SUBNET" | cut -d/ -f2)
-HOST_BRIDGE_IP=$(echo "$OPNSENSE_IP" | sed 's/\.[0-9]*$/.254')
+HOST_BRIDGE_IP="${OPNSENSE_IP%.*}.254"
 
 BASE_URL="https://${OPNSENSE_IP}/api"
 echo ""
