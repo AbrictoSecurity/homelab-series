@@ -50,10 +50,15 @@ echo ""
 # Find the NIC currently carrying the management route.
 # Fall back gracefully if route is not found (e.g. non-standard setups).
 MGMT_NIC=""
-if MGMT_NIC=$(ip route get 192.168.1.1 2>/dev/null \
+MGMT_IP=""
+if MGMT_NIC=$(ip route show default 2>/dev/null \
     | awk '/dev/ { for(i=1;i<=NF;i++) if($i=="dev") print $(i+1) }' \
     | head -1); then
-    [[ -n "$MGMT_NIC" ]] && info "Detected management NIC: ${BOLD}${MGMT_NIC}${RESET} (assigned to vmbr0 — will be excluded)"
+    if [[ -n "$MGMT_NIC" ]]; then
+        MGMT_IP=$(ip -4 addr show "$MGMT_NIC" 2>/dev/null \
+            | awk '/inet / { print $2 }' | cut -d/ -f1 | head -1)
+        info "Detected management NIC: ${BOLD}${MGMT_NIC}${RESET}  IP: ${BOLD}${MGMT_IP:-unknown}${RESET} (assigned to vmbr0 — will be excluded)"
+    fi
 fi
 echo ""
 
@@ -253,7 +258,7 @@ echo -e "${BOLD}Backup saved at:${RESET}"
 echo "  ${BACKUP}"
 echo ""
 echo -e "${BOLD}Next steps:${RESET}"
-echo "  1. Verify Proxmox web UI is still accessible at https://192.168.1.x:8006"
+echo "  1. Verify Proxmox web UI is still accessible at https://${MGMT_IP:-<management-ip>}:8006"
 echo "     (vmbr0 was not modified — management access is unchanged)"
 echo ""
 echo "  2. Download the OPNsense installer ISO:"
