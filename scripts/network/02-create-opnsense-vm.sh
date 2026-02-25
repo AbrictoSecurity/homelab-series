@@ -185,11 +185,13 @@ printf "  %-18s  %s\n" "VM ID:"        "$VMID"
 printf "  %-18s  %s\n" "Name:"         "$VM_NAME"
 printf "  %-18s  %s\n" "Memory:"       "${VM_MEM} MB"
 printf "  %-18s  %s\n" "CPU cores:"    "$VM_CORES"
-printf "  %-18s  %s\n" "CPU type:"     "host"
-printf "  %-18s  %s\n" "OS type:"      "other (FreeBSD/HardenedBSD)"
-printf "  %-18s  %s\n" "Disk:"         "${VM_STORAGE}:${VM_DISK_GB}G  (virtio-scsi)"
-printf "  %-18s  %s\n" "ISO:"          "$ISO_NAME"
-printf "  %-18s  %s\n" "Boot:"         "CDROM first (change to disk after install)"
+printf "  %-18s  %s\n" "CPU type:"      "host"
+printf "  %-18s  %s\n" "OS type:"       "other (FreeBSD/HardenedBSD)"
+printf "  %-18s  %s\n" "Disk:"          "${VM_STORAGE}:${VM_DISK_GB}G  (virtio-scsi)"
+printf "  %-18s  %s\n" "ISO:"           "$ISO_NAME"
+printf "  %-18s  %s\n" "Serial:"        "socket  (required for qm terminal)"
+printf "  %-18s  %s\n" "VGA:"           "serial0"
+printf "  %-18s  %s\n" "Boot:"          "CDROM first (change to disk after install)"
 printf "  %-18s  %s\n" "Start on boot:" "yes"
 echo ""
 printf "  ${CYAN}%-18s${RESET}  %s\n" "net0 (vtnet0):" "virtio → vmbr1  [WAN]"
@@ -214,6 +216,8 @@ qm create "$VMID" \
     --cpu         host \
     --ostype      other \
     --scsihw      virtio-scsi-pci \
+    --serial0     socket \
+    --vga         serial0 \
     --cdrom       "${ISO_REF}" \
     --boot        order=ide2 \
     --net0        "virtio,bridge=vmbr1,firewall=0" \
