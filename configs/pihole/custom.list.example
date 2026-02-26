@@ -3,12 +3,21 @@
 # This file shows the local DNS A records added by 07-pihole-dns-records.sh.
 # Format: <IP>  <hostname>
 #
-# Copy to /etc/pihole/custom.list on your Pi-hole LXC, then restart Pi-hole:
-#   pihole restartdns
+# Copy to /etc/pihole/custom.list on your Pi-hole LXC (CT101), then reload:
+#   pihole restartdns reload
 #
 # Replace "yourname-lab.com" with your actual registered domain.
+#
+# DNS resolution flow:
+#   Internal hosts   → resolved directly from this file
+#   AD domain (corp) → forwarded to Samba DC at 10.10.10.3 (see 09-pihole-conditional-forward.sh)
+#   All other DNS    → forwarded upstream to Cloudflare 1.1.1.1
 
+# Management network
 192.168.1.100  proxmox.yourname-lab.com
+
+# Internal network (vmbr2 — 10.10.10.0/24)
 10.10.10.1     edge.yourname-lab.com
 10.10.10.2     pihole.yourname-lab.com
 10.10.10.3     dc01.corp.yourname-lab.com
+10.10.10.10    admin-internal.yourname-lab.com

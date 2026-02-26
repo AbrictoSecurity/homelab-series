@@ -1,37 +1,48 @@
 # /etc/network/interfaces — Proxmox bridge additions
 #
 # This file shows the bridge stanzas added by 01-create-bridges.sh.
-# Your existing vmbr0 (management) and physical NIC entries are preserved.
+# Your existing vmbr0 (management) and physical NIC entries are preserved
+# and are NOT modified by the script.
 #
-# Copy the relevant bridge blocks into your /etc/network/interfaces
-# and adjust the bridge_ports to match your physical NIC names.
-# Run: ip link show   to see your NIC names before editing.
+# NIC names shown below are from the Abricto lab reference build.
+# Your NIC names will likely differ. Run the following to identify yours:
 #
-# After editing, apply with:   ifreload -a   (or reboot)
+#   ip -br link show
+#   ip route show default        # identifies the management NIC — do not reassign
+#
+# Apply changes without rebooting:   ifreload -a
+#
+# Network reference:
+#   vmbr0  eno1  Management   192.168.1.0/24   (Proxmox host: 192.168.1.100)
+#   vmbr1  eno2  Edge (WAN)   DHCP from home router
+#   vmbr2  eno3  Internal     10.10.10.0/24    (OPNsense LAN: 10.10.10.1)
+#   vmbr3  eno4  DMZ          10.20.20.0/24    (OPNsense DMZ: 10.20.20.1)
 
-# vmbr1 — Edge (WAN) — connects to home router
-# OPNsense WAN interface (vtnet0) attaches here
+# vmbr1 — Edge (WAN) — passes internet uplink to OPNsense vtnet0
 auto vmbr1
 iface vmbr1 inet manual
-        bridge-ports enp2s0f0      # Replace with your NIC name
+        bridge-ports eno2              # Replace with your NIC name
         bridge-stp off
         bridge-fd 0
         bridge-vlan-aware no
 
 # vmbr2 — Internal (LAN) — 10.10.10.0/24
 # OPNsense LAN interface (vtnet1) is the gateway at 10.10.10.1
+# Hosts on this bridge: OPNsense (10.10.10.1), admin-internal CT110 (10.10.10.10),
+#                       Pi-hole CT101 (10.10.10.2), Samba DC CT102 (10.10.10.3)
 auto vmbr2
 iface vmbr2 inet manual
-        bridge-ports enp2s0f1      # Replace with your NIC name
+        bridge-ports eno3              # Replace with your NIC name
         bridge-stp off
         bridge-fd 0
         bridge-vlan-aware no
 
 # vmbr3 — DMZ — 10.20.20.0/24
 # OPNsense DMZ interface (vtnet2) is the gateway at 10.20.20.1
+# Firewall rules: Block DMZ→Internal, Block Internal→DMZ (created by 03-opnsense-configure.sh)
 auto vmbr3
 iface vmbr3 inet manual
-        bridge-ports enp2s0f2      # Replace with your NIC name
+        bridge-ports eno4              # Replace with your NIC name
         bridge-stp off
         bridge-fd 0
         bridge-vlan-aware no

@@ -1,15 +1,23 @@
 # Samba AD DC — /etc/samba/smb.conf
 #
-# This is the reference smb.conf generated after running 08-samba-lxc.sh
-# and completing the Samba domain provisioning step.
+# This is the reference smb.conf generated after running 08-samba-lxc.sh.
+# The provisioning command (samba-tool domain provision) writes this file
+# automatically. This file is for reference and post-deployment verification.
 #
-# Do NOT copy this verbatim. The provisioning command generates the correct
-# smb.conf for your environment. This file is for reference only.
+# Do NOT copy this verbatim — let the provisioning script generate it.
+# Replace "yourname-lab.com", "CORP", and "YOURLAB" with your actual values.
 #
-# Replace "yourname-lab.com", "CORP", and DC IP with your actual values.
+# LXC reference:
+#   Container:  CT102  dc01
+#   IP:         10.10.10.3/24   gateway 10.10.10.1 (OPNsense)
+#   DNS server: 10.10.10.2      (Pi-hole, which forwards corp.* back to this DC)
+#
+# Verify after provisioning:
+#   pct exec 102 -- samba-tool domain info 127.0.0.1
+#   pct exec 102 -- samba-tool fsmo show
 
 [global]
-    workgroup = CORP
+    workgroup = YOURLAB
     realm = CORP.YOURNAME-LAB.COM
     netbios name = DC01
     server role = active directory domain controller
