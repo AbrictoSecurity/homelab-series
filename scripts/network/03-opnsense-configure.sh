@@ -61,9 +61,9 @@ AUTH="${API_KEY}:${API_SECRET}"
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║     Abricto HomeLab — 03-opnsense-configure.sh          ║${RESET}"
-echo -e "${BOLD}║  Phase 0: Create internal admin LXC on vmbr2            ║${RESET}"
-echo -e "${BOLD}║  Phase 1: Configure DMZ interface + firewall rules      ║${RESET}"
+echo -e "${BOLD}║      Abricto HomeLab — 03-opnsense-configure.sh          ║${RESET}"
+echo -e "${BOLD}║   Phase 0: Create internal admin LXC on vmbr2            ║${RESET}"
+echo -e "${BOLD}║   Phase 1: Configure DMZ interface + firewall rules      ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 warn "SSL certificate verification is skipped (-k) because OPNsense"
@@ -95,7 +95,7 @@ echo ""
 # PHASE 0 — Internal admin LXC
 # ═══════════════════════════════════════════════════════════════════════════════
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║  Phase 0 — Internal Admin LXC                           ║${RESET}"
+echo -e "${BOLD}║             Phase 0 — Internal Admin LXC                 ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo "  A lightweight Debian 12 LXC on vmbr2 gives you a persistent machine"
@@ -130,8 +130,65 @@ if [[ "$CREATE_LXC" == "y" || "$CREATE_LXC" == "yes" ]]; then
     read -r -p "  Static IP for LXC [10.10.10.10]: " LXC_IP
     LXC_IP="${LXC_IP:-10.10.10.10}"
 
-    read -r -p "  Storage pool [local-lvm]: " LXC_STORAGE
-    LXC_STORAGE="${LXC_STORAGE:-local-lvm}"
+    # ── Storage pool ──────────────────────────────────────────────────────────
+    echo ""
+    echo -e "  ${BOLD}Available storage pools:${RESET}"
+    echo ""
+    printf "    %-4s  %-20s  %-12s  %s\n" "NUM" "NAME" "TYPE" "AVAILABLE"
+    printf "    %-4s  %-20s  %-12s  %s\n" "───" "───────────────────" "───────────" "─────────"
+
+    mapfile -t lxc_storage_lines < <(pvesm status 2>/dev/null | awk 'NR>1 { print $1, $2, $3, $5 }')
+    lxc_storage_names=()
+
+    for line in "${lxc_storage_lines[@]}"; do
+        read -r sname stype sstatus savail <<< "$line"
+        stype_lower="${stype,,}"
+        [[ "$stype_lower" =~ ^(dir|lvm|lvmthin|zfspool|rbd|cephfs|nfs|cifs|btrfs|glusterfs|iscsi|iscsidirect|zfs) ]] || continue
+        [[ "$sstatus" == "active" ]] || continue
+        lxc_storage_names+=("$sname")
+        idx=${#lxc_storage_names[@]}
+        printf "    ${CYAN}%-4s${RESET}  %-20s  %-12s  %s\n" \
+            "$idx" "$sname" "$stype" "${savail:-n/a}"
+    done
+    echo ""
+
+    if [[ ${#lxc_storage_names[@]} -eq 0 ]]; then
+        die "No active storage pools found. Run 'pvesm status' to diagnose."
+    fi
+
+    if [[ ${#lxc_storage_names[@]} -eq 1 ]]; then
+        LXC_STORAGE="${lxc_storage_names[0]}"
+        info "Auto-selected storage: ${BOLD}${LXC_STORAGE}${RESET}"
+    else
+        lxc_default_storage_idx=1
+        for i in "${!lxc_storage_names[@]}"; do
+            [[ "${lxc_storage_names[$i]}" == "local-lvm" ]] && { lxc_default_storage_idx=$((i+1)); break; }
+        done
+        while true; do
+            read -r -p "  Select storage number [${lxc_default_storage_idx}]: " lxc_storage_choice
+            lxc_storage_choice="${lxc_storage_choice:-${lxc_default_storage_idx}}"
+            if [[ "$lxc_storage_choice" =~ ^[0-9]+$ ]] \
+                && (( lxc_storage_choice >= 1 && lxc_storage_choice <= ${#lxc_storage_names[@]} )); then
+                LXC_STORAGE="${lxc_storage_names[$((lxc_storage_choice-1))]}"
+                break
+            fi
+            warn "Invalid selection. Enter a number between 1 and ${#lxc_storage_names[@]}."
+        done
+    fi
+    echo ""
+
+    read -r -p "  Memory in GB [2]: " LXC_MEM
+    LXC_MEM="${LXC_MEM:-2}"
+    [[ "$LXC_MEM" =~ ^[0-9]+$ ]] || die "Memory must be a number in GB."
+
+    read -r -p "  CPU cores [2]: " LXC_CORES
+    LXC_CORES="${LXC_CORES:-2}"
+    [[ "$LXC_CORES" =~ ^[0-9]+$ ]] || die "CPU cores must be a number."
+
+    read -r -p "  Disk size in GB [8]: " LXC_DISK_GB
+    LXC_DISK_GB="${LXC_DISK_GB:-8}"
+    [[ "$LXC_DISK_GB" =~ ^[0-9]+$ ]] || die "Disk size must be a number in GB."
+    echo ""
 
     read -r -s -p "  Root password for LXC: " LXC_PASS
     echo ""
@@ -181,8 +238,9 @@ if [[ "$CREATE_LXC" == "y" || "$CREATE_LXC" == "yes" ]]; then
     printf "  %-18s  %s\n" "IP:"            "${LXC_IP}/${LAN_MASK}"
     printf "  %-18s  %s\n" "Gateway:"       "$OPNSENSE_IP"
     printf "  %-18s  %s\n" "Bridge:"        "vmbr2 (Internal)"
-    printf "  %-18s  %s\n" "Storage:"       "$LXC_STORAGE:4G"
-    printf "  %-18s  %s\n" "Memory:"        "512 MB"
+    printf "  %-18s  %s\n" "Storage:"       "${LXC_STORAGE}:${LXC_DISK_GB}G"
+    printf "  %-18s  %s\n" "Memory:"        "${LXC_MEM} GB  ($((LXC_MEM * 1024)) MB)"
+    printf "  %-18s  %s\n" "CPU cores:"     "$LXC_CORES"
     printf "  %-18s  %s\n" "Template:"      "$(basename "$TEMPLATE_PATH")"
     echo ""
     echo -e "${BOLD}──────────────────────────────────────────────────────────${RESET}"
@@ -197,9 +255,9 @@ if [[ "$CREATE_LXC" == "y" || "$CREATE_LXC" == "yes" ]]; then
 
         pct create "$LXC_CTID" "$TEMPLATE_REF" \
             --hostname    "$LXC_HOSTNAME" \
-            --memory      512 \
-            --cores       1 \
-            --rootfs      "${LXC_STORAGE}:4" \
+            --memory      "$((LXC_MEM * 1024))" \
+            --cores       "$LXC_CORES" \
+            --rootfs      "${LXC_STORAGE}:${LXC_DISK_GB}" \
             --net0        "name=eth0,bridge=vmbr2,ip=${LXC_IP}/${LAN_MASK},gw=${OPNSENSE_IP}" \
             --nameserver  "$OPNSENSE_IP" \
             --password    "$LXC_PASS" \
@@ -229,7 +287,7 @@ fi
 # PHASE 1 — OPNsense API configuration
 # ═══════════════════════════════════════════════════════════════════════════════
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║  Phase 1 — OPNsense API Configuration                   ║${RESET}"
+echo -e "${BOLD}║         Phase 1 — OPNsense API Configuration             ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 
@@ -435,7 +493,7 @@ echo ""
 # Result
 # ═══════════════════════════════════════════════════════════════════════════════
 echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${GREEN}${BOLD}║   Phase 0 + Phase 1 complete.                           ║${RESET}"
+echo -e "${GREEN}${BOLD}║             Phase 0 + Phase 1 complete.                  ║${RESET}"
 echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 

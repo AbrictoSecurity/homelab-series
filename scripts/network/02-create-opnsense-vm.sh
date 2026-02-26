@@ -111,10 +111,11 @@ echo ""
 # ─── Storage pool discovery ───────────────────────────────────────────────────
 echo -e "${BOLD}Available storage pools (for VM disk):${RESET}"
 echo ""
-printf "  %-20s  %-12s  %-10s  %s\n" "NAME" "TYPE" "STATUS" "AVAILABLE"
-printf "  %-20s  %-12s  %-10s  %s\n" "───────────────────" "───────────" "─────────" "─────────"
+printf "  %-4s  %-20s  %-12s  %s\n" "NUM" "NAME" "TYPE" "AVAILABLE"
+printf "  %-4s  %-20s  %-12s  %s\n" "───" "───────────────────" "───────────" "─────────"
 
 mapfile -t storage_lines < <(pvesm status 2>/dev/null | awk 'NR>1 { print $1, $2, $3, $5 }')
+storage_names=()
 
 for line in "${storage_lines[@]}"; do
     read -r sname stype sstatus savail <<< "$line"
@@ -122,11 +123,36 @@ for line in "${storage_lines[@]}"; do
     stype_lower="${stype,,}"
     [[ "$stype_lower" =~ ^(dir|lvm|lvmthin|zfspool|rbd|cephfs|nfs|cifs|btrfs|glusterfs|iscsi|iscsidirect|zfs) ]] || continue
     [[ "$sstatus" == "active" ]] || continue
-
-    status_col="${GREEN}active${RESET}"
-    printf "  ${CYAN}%-20s${RESET}  %-12s  %b  %s\n" \
-        "$sname" "$stype" "$status_col" "${savail:-n/a}"
+    storage_names+=("$sname")
+    idx=${#storage_names[@]}
+    printf "  ${CYAN}%-4s${RESET}  %-20s  %-12s  %s\n" \
+        "$idx" "$sname" "$stype" "${savail:-n/a}"
 done
+echo ""
+
+if [[ ${#storage_names[@]} -eq 0 ]]; then
+    die "No active storage pools found. Run 'pvesm status' to diagnose."
+fi
+
+if [[ ${#storage_names[@]} -eq 1 ]]; then
+    VM_STORAGE="${storage_names[0]}"
+    info "Auto-selected storage: ${BOLD}${VM_STORAGE}${RESET}"
+else
+    default_storage_idx=1
+    for i in "${!storage_names[@]}"; do
+        [[ "${storage_names[$i]}" == "local-lvm" ]] && { default_storage_idx=$((i+1)); break; }
+    done
+    while true; do
+        read -r -p "  Select storage number [${default_storage_idx}]: " storage_choice
+        storage_choice="${storage_choice:-${default_storage_idx}}"
+        if [[ "$storage_choice" =~ ^[0-9]+$ ]] \
+            && (( storage_choice >= 1 && storage_choice <= ${#storage_names[@]} )); then
+            VM_STORAGE="${storage_names[$((storage_choice-1))]}"
+            break
+        fi
+        warn "Invalid selection. Enter a number between 1 and ${#storage_names[@]}."
+    done
+fi
 echo ""
 
 # ─── Interactive configuration ────────────────────────────────────────────────
@@ -154,9 +180,9 @@ VM_NAME="${VM_NAME:-opnsense-edge}"
 echo ""
 
 # ── Memory ────────────────────────────────────────────────────────────────────
-read -r -p "  Memory in MB [2048]: " VM_MEM
-VM_MEM="${VM_MEM:-2048}"
-[[ "$VM_MEM" =~ ^[0-9]+$ ]] || die "Memory must be a number in MB."
+read -r -p "  Memory in GB [2]: " VM_MEM
+VM_MEM="${VM_MEM:-2}"
+[[ "$VM_MEM" =~ ^[0-9]+$ ]] || die "Memory must be a number in GB."
 echo ""
 
 # ── CPU cores ─────────────────────────────────────────────────────────────────
@@ -165,19 +191,9 @@ VM_CORES="${VM_CORES:-2}"
 [[ "$VM_CORES" =~ ^[0-9]+$ ]] || die "CPU cores must be a number."
 echo ""
 
-# ── Storage pool ──────────────────────────────────────────────────────────────
-read -r -p "  Storage pool for VM disk [local-lvm]: " VM_STORAGE
-VM_STORAGE="${VM_STORAGE:-local-lvm}"
-
-# Validate the selected storage exists and is active
-if ! pvesm status 2>/dev/null | awk 'NR>1 {print $1}' | grep -q "^${VM_STORAGE}$"; then
-    die "Storage pool '${VM_STORAGE}' not found or not active.\n       Run 'pvesm status' to see available pools."
-fi
-echo ""
-
 # ── Disk size ─────────────────────────────────────────────────────────────────
-read -r -p "  Disk size in GB [16]: " VM_DISK_GB
-VM_DISK_GB="${VM_DISK_GB:-16}"
+read -r -p "  Disk size in GB [8]: " VM_DISK_GB
+VM_DISK_GB="${VM_DISK_GB:-8}"
 [[ "$VM_DISK_GB" =~ ^[0-9]+$ ]] || die "Disk size must be a number in GB."
 echo ""
 
@@ -187,7 +203,7 @@ echo -e "${BOLD}Review before applying:${RESET}"
 echo ""
 printf "  %-18s  %s\n" "VM ID:"        "$VMID"
 printf "  %-18s  %s\n" "Name:"         "$VM_NAME"
-printf "  %-18s  %s\n" "Memory:"       "${VM_MEM} MB"
+printf "  %-18s  %s\n" "Memory:"       "${VM_MEM} GB  ($((VM_MEM * 1024)) MB)"
 printf "  %-18s  %s\n" "CPU cores:"    "$VM_CORES"
 printf "  %-18s  %s\n" "CPU type:"      "host"
 printf "  %-18s  %s\n" "OS type:"       "other (FreeBSD/HardenedBSD)"
@@ -215,7 +231,7 @@ info "Creating VM ${VMID} (${VM_NAME}) ..."
 
 qm create "$VMID" \
     --name        "$VM_NAME" \
-    --memory      "$VM_MEM" \
+    --memory      "$((VM_MEM * 1024))" \
     --cores       "$VM_CORES" \
     --cpu         host \
     --ostype      other \
