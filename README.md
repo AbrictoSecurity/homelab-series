@@ -73,12 +73,12 @@ Full reference: [docs/ip-allocation.md](docs/ip-allocation.md)
 | `scripts/network/01-create-bridges.sh` | 2 | Creates vmbr1/2/3 on Proxmox | `bash 01-create-bridges.sh` |
 | `scripts/network/02-create-opnsense-vm.sh` | 2 | Creates OPNsense VM via `qm` | `bash 02-create-opnsense-vm.sh` |
 | `scripts/network/03-opnsense-configure.sh` | 2 | Configures OPNsense interfaces and firewall rules via API | `bash 03-opnsense-configure.sh <key> <secret>` |
-| `scripts/dns-ssl/04-certbot-setup.sh` | 3 | Installs Certbot and issues wildcard cert via Let's Encrypt + Cloudflare | `bash 04-certbot-setup.sh <domain> <cf_token>` |
-| `scripts/dns-ssl/05-deploy-certs.sh` | 3 | Distributes certs to Proxmox, OPNsense, and Pi-hole | `bash 05-deploy-certs.sh <domain>` |
-| `scripts/pihole/06-pihole-lxc.sh` | 3 | Creates and installs Pi-hole in an LXC container | `bash 06-pihole-lxc.sh` |
-| `scripts/pihole/07-pihole-dns-records.sh` | 3 | Adds local DNS A records to Pi-hole | `bash 07-pihole-dns-records.sh <domain>` |
-| `scripts/samba/08-samba-lxc.sh` | 3 | Creates and provisions a Samba AD DC LXC | `bash 08-samba-lxc.sh <domain> <realm> <netbios> <pass>` |
-| `scripts/pihole/09-pihole-conditional-forward.sh` | 3 | Wires Pi-hole conditional forwarding to Samba DNS | `bash 09-pihole-conditional-forward.sh <ad_domain> <dc_ip>` |
+| `scripts/dns-ssl/04-certbot-setup.sh` | 3 | Installs Certbot and issues wildcard cert via Let's Encrypt + Cloudflare DNS-01 (CF token prompted interactively) | `bash 04-certbot-setup.sh <domain>` |
+| `scripts/dns-ssl/05-deploy-certs.sh` | 3 | Deploys wildcard cert to Proxmox (local) and Pi-hole (via pct); OPNsense import is documented but manual | `bash 05-deploy-certs.sh <domain>` |
+| `scripts/pihole/06-pihole-lxc.sh` | 3 | Creates and installs Pi-hole in a Debian 12 LXC container (interactive) | `bash 06-pihole-lxc.sh` |
+| `scripts/pihole/07-pihole-dns-records.sh` | 3 | Adds local DNS A records to Pi-hole; idempotent | `bash 07-pihole-dns-records.sh <domain>` |
+| `scripts/samba/08-samba-lxc.sh` | 3 | Creates and provisions a Samba AD DC in a privileged Debian 12 LXC (interactive; AD password prompted) | `bash 08-samba-lxc.sh` |
+| `scripts/pihole/09-pihole-conditional-forward.sh` | 3 | Configures Pi-hole to forward AD domain queries to the Samba DC | `bash 09-pihole-conditional-forward.sh <ad_domain> <dc_ip>` |
 
 ---
 
