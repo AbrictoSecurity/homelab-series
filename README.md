@@ -44,6 +44,8 @@ cd /opt/homelab
 
 ## Network Reference
 
+![HomeLab Network Topology](docs/network-diagram.drawio-light.png)
+
 ### Bridges
 
 | Bridge | Physical NIC | Role | Subnet | Gateway |
