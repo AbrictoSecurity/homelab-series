@@ -17,7 +17,7 @@ Open a GitHub Issue and include:
 
 ## Script Standards
 
-Every script in this repo must meet the following standards before being merged. These are non-negotiable — they exist to protect readers who copy-paste commands into production environments.
+Every script in this repo must meet the following standards before being merged. These are non-negotiable, they exist to protect readers who copy-paste commands into production environments.
 
 ### Required Header Block
 
@@ -40,9 +40,9 @@ Every script must have these on line 2 (after the shebang):
 set -euo pipefail
 ```
 
-- `set -e` — exit immediately on any error
-- `set -u` — treat unset variables as errors (catches typos in variable names)
-- `set -o pipefail` — catch errors in piped commands, not just the last one
+- `set -e`, exit immediately on any error
+- `set -u`, treat unset variables as errors (catches typos in variable names)
+- `set -o pipefail`, catch errors in piped commands, not just the last one
 
 ### Argument Validation
 
@@ -135,8 +135,8 @@ ShellCheck also runs automatically on every push via GitHub Actions. PRs with Sh
 
 Examples:
 ```
-add: 04-certbot-setup.sh — wildcard cert via Let's Encrypt
-fix: 03-opnsense-configure.sh — handle missing API response
+add: 04-certbot-setup.sh, wildcard cert via Let's Encrypt
+fix: 03-opnsense-configure.sh, handle missing API response
 docs: update README script reference table for Post 3
 ci: pin shellcheck action to v1.32.0
 ```

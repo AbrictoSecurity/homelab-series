@@ -43,7 +43,7 @@ command -v dig    &>/dev/null || die "dig not found. Run: apt-get install -y dns
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║     Abricto HomeLab — 09-pihole-conditional-forward.sh   ║${RESET}"
+echo -e "${BOLD}║     Abricto HomeLab, 09-pihole-conditional-forward.sh   ║${RESET}"
 echo -e "${BOLD}║     Wire Pi-hole conditional forwarding → Samba DC       ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
@@ -61,7 +61,7 @@ DNSMASQ_CONF="/etc/dnsmasq.d/02-homelab-conditional.conf"
 # Back up if already exists (supports re-running with different values)
 if [[ -f "$DNSMASQ_CONF" ]]; then
     BACKUP="${DNSMASQ_CONF}.bak.$(date +%Y%m%d%H%M%S)"
-    info "Existing config found — backing up → ${BACKUP}"
+    info "Existing config found, backing up → ${BACKUP}"
     cp "$DNSMASQ_CONF" "$BACKUP"
     ok "Backup created."
     echo ""
@@ -69,7 +69,7 @@ fi
 
 info "Writing ${DNSMASQ_CONF}..."
 cat > "$DNSMASQ_CONF" << EOF
-# HomeLab conditional DNS forwarding — managed by 09-pihole-conditional-forward.sh
+# HomeLab conditional DNS forwarding, managed by 09-pihole-conditional-forward.sh
 # Forward all queries for the Samba AD domain to the Samba DC.
 # This allows internal clients to resolve AD hostnames via Pi-hole without
 # needing to point their DNS directly at the DC.
@@ -108,9 +108,9 @@ else
     echo ""
     warn "Resolution did not return the expected IP."
     warn "Possible causes:"
-    warn "  • Samba AD DC (CTID 102) is not yet running — start it first"
-    warn "  • The DC's hostname is not registered in Samba DNS — check samba-tool dns query"
-    warn "  • Pi-hole dnsmasq did not fully reload — try: pihole restartdns"
+    warn "  • Samba AD DC (CTID 102) is not yet running, start it first"
+    warn "  • The DC's hostname is not registered in Samba DNS, check samba-tool dns query"
+    warn "  • Pi-hole dnsmasq did not fully reload, try: pihole restartdns"
     echo ""
     VERIFY_OK=false
 fi
@@ -122,7 +122,7 @@ if $VERIFY_OK; then
     echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 else
     echo -e "${YELLOW}${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-    echo -e "${YELLOW}${BOLD}║   Forwarding written — verify once Samba DC is running.  ║${RESET}"
+    echo -e "${YELLOW}${BOLD}║   Forwarding written, verify once Samba DC is running.  ║${RESET}"
     echo -e "${YELLOW}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 fi
 

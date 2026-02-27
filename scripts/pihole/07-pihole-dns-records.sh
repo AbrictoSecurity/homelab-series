@@ -2,7 +2,7 @@
 # Script:      07-pihole-dns-records.sh
 # Description: Adds local DNS A records for all Abricto HomeLab services to
 #              Pi-hole's custom DNS list (/etc/pihole/custom.list).
-#              Idempotent — skips records that already exist.
+#              Idempotent, skips records that already exist.
 # Blog post:   https://abrictosecurity.com/homelab-series-domain-ssl-pihole-samba
 # Usage:       bash 07-pihole-dns-records.sh <domain>
 # Example:     bash 07-pihole-dns-records.sh yourname-lab.com
@@ -42,7 +42,7 @@ command -v dig    &>/dev/null || die "dig not found. Run: apt-get install -y dns
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║        Abricto HomeLab — 07-pihole-dns-records.sh        ║${RESET}"
+echo -e "${BOLD}║        Abricto HomeLab, 07-pihole-dns-records.sh        ║${RESET}"
 echo -e "${BOLD}║        Add local DNS A records to Pi-hole                ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
@@ -68,7 +68,7 @@ if [[ -f "$CUSTOM_LIST" ]]; then
     cp "$CUSTOM_LIST" "$BACKUP"
     ok "Backup created."
 else
-    info "${CUSTOM_LIST} does not exist — it will be created."
+    info "${CUSTOM_LIST} does not exist, it will be created."
     touch "$CUSTOM_LIST"
 fi
 echo ""

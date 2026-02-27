@@ -10,7 +10,7 @@
 # Security:    The Cloudflare API token is read interactively (silent prompt).
 #              It is written to /root/.secrets/certbot/cloudflare.ini (chmod 600,
 #              root-only) and unset from memory immediately after. Never pass
-#              tokens as shell arguments — they appear in 'ps' output and history.
+#              tokens as shell arguments, they appear in 'ps' output and history.
 
 set -euo pipefail
 
@@ -41,7 +41,7 @@ DOMAIN="${1:?Usage: $0 <domain>  Example: $0 yourname-lab.com}"
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║         Abricto HomeLab — 04-certbot-setup.sh            ║${RESET}"
+echo -e "${BOLD}║         Abricto HomeLab, 04-certbot-setup.sh            ║${RESET}"
 echo -e "${BOLD}║   Wildcard Let's Encrypt cert via Cloudflare DNS-01      ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
@@ -79,8 +79,8 @@ mkdir -p "$CREDS_DIR"
 chmod 700 "$CREDS_DIR"
 
 cat > "$CREDS_FILE" << EOF
-# Cloudflare API token — managed by 04-certbot-setup.sh
-# chmod 600 — root-readable only. Never commit to version control.
+# Cloudflare API token, managed by 04-certbot-setup.sh
+# chmod 600, root-readable only. Never commit to version control.
 dns_cloudflare_api_token = ${CF_TOKEN}
 EOF
 
@@ -91,7 +91,7 @@ echo ""
 
 # ─── Request wildcard certificate ────────────────────────────────────────────
 info "Requesting wildcard certificate for ${DOMAIN} and *.${DOMAIN}..."
-info "(DNS-01 propagation can take up to 60 s — this is expected)"
+info "(DNS-01 propagation can take up to 60 s, this is expected)"
 echo ""
 
 certbot certonly \
@@ -118,7 +118,7 @@ mkdir -p "$(dirname "$HOOK_FILE")"
 
 cat > "$HOOK_FILE" << HOOK
 #!/bin/bash
-# Renewal deploy hook — managed by 04-certbot-setup.sh (domain: ${DOMAIN})
+# Renewal deploy hook, managed by 04-certbot-setup.sh (domain: ${DOMAIN})
 # Runs automatically after each successful cert renewal.
 # Update PIHOLE_CTID if your Pi-hole container uses a different ID.
 set -euo pipefail
@@ -127,9 +127,9 @@ DOMAIN="${DOMAIN}"
 PIHOLE_CTID=101
 CERT_DIR="/etc/letsencrypt/live/\${DOMAIN}"
 
-echo "[hook] Cert renewed for \${DOMAIN} — redeploying..."
+echo "[hook] Cert renewed for \${DOMAIN}, redeploying..."
 
-# Re-deploy to Proxmox (local copy — no SSH needed)
+# Re-deploy to Proxmox (local copy, no SSH needed)
 cp "\${CERT_DIR}/fullchain.pem" /etc/pve/local/pve-ssl.pem
 cp "\${CERT_DIR}/privkey.pem"   /etc/pve/local/pve-ssl.key
 systemctl restart pveproxy && echo "[hook] pveproxy restarted"
@@ -150,7 +150,7 @@ echo ""
 # ─── Dry-run renewal test ─────────────────────────────────────────────────────
 info "Testing automatic renewal (dry run)..."
 certbot renew --dry-run
-ok "Renewal dry-run passed — automatic rotation is working."
+ok "Renewal dry-run passed, automatic rotation is working."
 echo ""
 
 # ─── Result ───────────────────────────────────────────────────────────────────
@@ -161,12 +161,12 @@ echo -e "${GREEN}${BOLD}║              Certificate issued successfully.       
 echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "${BOLD}Certificate files:${RESET}"
-echo "  ${CERT_DIR}/fullchain.pem   — certificate chain (use this for services)"
-echo "  ${CERT_DIR}/privkey.pem     — private key (root-readable only)"
+echo "  ${CERT_DIR}/fullchain.pem  , certificate chain (use this for services)"
+echo "  ${CERT_DIR}/privkey.pem    , private key (root-readable only)"
 echo ""
 echo -e "${BOLD}Automatic renewal:${RESET}"
-echo "  systemctl status certbot.timer   — confirm timer is active"
-echo "  certbot renew --dry-run          — manual dry-run test"
+echo "  systemctl status certbot.timer  , confirm timer is active"
+echo "  certbot renew --dry-run         , manual dry-run test"
 echo ""
 echo -e "${BOLD}Next steps:${RESET}"
 echo "  1. Create the Pi-hole LXC:"

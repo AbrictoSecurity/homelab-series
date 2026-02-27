@@ -1,6 +1,6 @@
-# Abricto Security — HomeLab Series
+# Abricto Security, HomeLab Series
 
-Scripts, configs, and automation for the **Abricto Security HomeLab Blog Series** — a practical, open source guide to building a production-grade home lab from scratch using refurbished enterprise hardware.
+Scripts, configs, and automation for the **Abricto Security HomeLab Blog Series**, a practical, open source guide to building a production-grade home lab from scratch using refurbished enterprise hardware.
 
 Every step in the blog posts has a corresponding script here. Clone the repo, customize the variables, and follow along.
 
@@ -11,7 +11,7 @@ Every step in the blog posts has a corresponding script here. Clone the repo, cu
 | Post | Title | Status | Blog Link |
 |------|-------|--------|-----------|
 | 1 | Proxmox on Refurbished Servers | Published | *(link when available)* |
-| 2 | Network Architecture — Bridges & OPNsense | In Progress | *(link when available)* |
+| 2 | Network Architecture, Bridges & OPNsense | In Progress | *(link when available)* |
 | 3 | Domain, SSL, Pi-hole & Samba AD | In Progress | *(link when available)* |
 | 4 | Kali Linux VM | Planned | *(link when available)* |
 
@@ -38,7 +38,7 @@ git clone https://github.com/abricto-security/homelab-series.git /opt/homelab
 cd /opt/homelab
 ```
 
-> **Before running any script:** Review it, understand what it does, and customize the variables at the top for your environment. These scripts are written for the reference network defined below — your IPs and hostnames will differ.
+> **Before running any script:** Review it, understand what it does, and customize the variables at the top for your environment. These scripts are written for the reference network defined below, your IPs and hostnames will differ.
 
 ---
 
@@ -108,6 +108,6 @@ If you accidentally commit a secret: rotate it immediately, then remove it from 
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT, see [LICENSE](LICENSE) for details.
 
 Scripts are provided as-is for educational purposes. Review all scripts before running them in your environment.

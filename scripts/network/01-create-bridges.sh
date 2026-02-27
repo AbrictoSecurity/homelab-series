@@ -5,7 +5,7 @@
 #              created by the Proxmox installer and is never modified here.
 # Blog post:   https://abrictosecurity.com/homelab-series-network-architecture
 # Usage:       sudo bash 01-create-bridges.sh
-# Dependencies: ifreload (ifupdown2 — default on Proxmox VE), brctl (bridge-utils)
+# Dependencies: ifreload (ifupdown2, default on Proxmox VE), brctl (bridge-utils)
 
 set -euo pipefail
 
@@ -41,7 +41,7 @@ BACKUP="${IFACES_FILE}.bak.$(date +%Y%m%d%H%M%S)"
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║        Abricto HomeLab — 01-create-bridges.sh            ║${RESET}"
+echo -e "${BOLD}║        Abricto HomeLab, 01-create-bridges.sh            ║${RESET}"
 echo -e "${BOLD}║  Creates vmbr1 (Edge/WAN), vmbr2 (Internal), vmbr3 (DMZ) ║${RESET}"
 echo -e "${BOLD}║  on Proxmox VE by appending to /etc/network/interfaces   ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
@@ -61,7 +61,7 @@ if MGMT_NIC=$(ip route show default 2>/dev/null \
     if [[ -n "$MGMT_NIC" ]]; then
         MGMT_IP=$(ip -4 addr show "$MGMT_NIC" 2>/dev/null \
             | awk '/inet / { print $2 }' | cut -d/ -f1 | head -1)
-        info "Detected management NIC: ${BOLD}${MGMT_NIC}${RESET}  IP: ${BOLD}${MGMT_IP:-unknown}${RESET} (assigned to vmbr0 — will be excluded)"
+        info "Detected management NIC: ${BOLD}${MGMT_NIC}${RESET}  IP: ${BOLD}${MGMT_IP:-unknown}${RESET} (assigned to vmbr0, will be excluded)"
     fi
 fi
 echo ""
@@ -79,7 +79,7 @@ while read -r iface state _rest; do
     [[ -z "$iface" ]] && continue
 
     note=""
-    [[ "$iface" == "$MGMT_NIC" ]] && note="${YELLOW}← management NIC (vmbr0) — do not reassign${RESET}"
+    [[ "$iface" == "$MGMT_NIC" ]] && note="${YELLOW}← management NIC (vmbr0), do not reassign${RESET}"
 
     printf "  ${CYAN}%-18s${RESET} %-10s %b\n" "$iface" "$state" "$note"
 done < <(ip -br link show)
@@ -98,8 +98,8 @@ echo "Enter the physical NIC name for each bridge."
 echo "Press Enter to accept the default value shown in [brackets]."
 echo ""
 
-# ── vmbr1 — Edge / WAN ────────────────────────────────────────────────────────
-echo -e "${CYAN}${BOLD}vmbr1 — Edge (WAN)${RESET}"
+# ── vmbr1, Edge / WAN ────────────────────────────────────────────────────────
+echo -e "${CYAN}${BOLD}vmbr1, Edge (WAN)${RESET}"
 echo "  Pure Layer 2 passthrough to your home router. OPNsense's WAN interface"
 echo "  (vtnet0) attaches here. No IP is assigned on the Proxmox host."
 echo ""
@@ -107,8 +107,8 @@ read -r -p "  Physical NIC for vmbr1 [eno2]: " NIC_WAN
 NIC_WAN="${NIC_WAN:-eno2}"
 echo ""
 
-# ── vmbr2 — Internal LAN ──────────────────────────────────────────────────────
-echo -e "${CYAN}${BOLD}vmbr2 — Internal (LAN)${RESET}"
+# ── vmbr2, Internal LAN ──────────────────────────────────────────────────────
+echo -e "${CYAN}${BOLD}vmbr2, Internal (LAN)${RESET}"
 echo "  Private lab network. Pi-hole, Samba DC, Kali VM, and all lab systems"
 echo "  live here. OPNsense's LAN interface (vtnet1) is the gateway."
 echo ""
@@ -120,8 +120,8 @@ read -r -p "  Proxmox host IP on vmbr2 [10.10.10.254]: " HOST_BRIDGE_IP
 HOST_BRIDGE_IP="${HOST_BRIDGE_IP:-10.10.10.254}"
 echo ""
 
-# ── vmbr3 — DMZ ───────────────────────────────────────────────────────────────
-echo -e "${CYAN}${BOLD}vmbr3 — DMZ${RESET}"
+# ── vmbr3, DMZ ───────────────────────────────────────────────────────────────
+echo -e "${CYAN}${BOLD}vmbr3, DMZ${RESET}"
 echo "  Isolated from Internal at the firewall level. Reserved for future"
 echo "  internet-facing services. OPNsense's DMZ interface (vtnet2) is the gateway."
 echo ""
@@ -167,7 +167,7 @@ echo -e "${BOLD}─────────────────────�
 echo -e "${BOLD}Review before applying:${RESET}"
 echo ""
 printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  %s\n" \
-    "vmbr1" "Edge (WAN)"     "$NIC_WAN" "no IP — L2 passthrough to home router"
+    "vmbr1" "Edge (WAN)"     "$NIC_WAN" "no IP, L2 passthrough to home router"
 printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  gateway: ${BOLD}%s${RESET}  host IP: ${BOLD}%s${RESET}\n" \
     "vmbr2" "Internal (LAN)" "$NIC_LAN" "$INTERNAL_GW" "${HOST_BRIDGE_IP}/${LAN_MASK}"
 printf "  ${CYAN}%-8s${RESET}  %-16s  NIC: ${BOLD}%-8s${RESET}  gateway: ${BOLD}%s${RESET}\n" \
@@ -196,9 +196,9 @@ cat >> "$IFACES_FILE" << EOF
 
 # ── HomeLab Series: bridges added by 01-create-bridges.sh on $(date +%Y-%m-%d) ──
 
-# vmbr1 — Edge (WAN)
+# vmbr1, Edge (WAN)
 # OPNsense WAN interface (vtnet0) attaches here.
-# Pure L2 passthrough — no IP assigned on the Proxmox host.
+# Pure L2 passthrough, no IP assigned on the Proxmox host.
 auto vmbr1
 iface vmbr1 inet manual
         bridge-ports ${NIC_WAN}
@@ -206,9 +206,9 @@ iface vmbr1 inet manual
         bridge-fd 0
         bridge-vlan-aware no
 
-# vmbr2 — Internal LAN (${INTERNAL_SUBNET})
-# OPNsense LAN interface (vtnet1) attaches here — gateway: ${INTERNAL_GW}
-# Proxmox host IP ${HOST_BRIDGE_IP}/${LAN_MASK} — used for API access and internal management
+# vmbr2, Internal LAN (${INTERNAL_SUBNET})
+# OPNsense LAN interface (vtnet1) attaches here, gateway: ${INTERNAL_GW}
+# Proxmox host IP ${HOST_BRIDGE_IP}/${LAN_MASK}, used for API access and internal management
 auto vmbr2
 iface vmbr2 inet static
         address ${HOST_BRIDGE_IP}/${LAN_MASK}
@@ -217,8 +217,8 @@ iface vmbr2 inet static
         bridge-fd 0
         bridge-vlan-aware no
 
-# vmbr3 — DMZ (${DMZ_SUBNET})
-# OPNsense DMZ interface (vtnet2) attaches here — gateway: ${DMZ_GW}
+# vmbr3, DMZ (${DMZ_SUBNET})
+# OPNsense DMZ interface (vtnet2) attaches here, gateway: ${DMZ_GW}
 auto vmbr3
 iface vmbr3 inet manual
         bridge-ports ${NIC_DMZ}
@@ -270,7 +270,7 @@ echo "  ${BACKUP}"
 echo ""
 echo -e "${BOLD}Next steps:${RESET}"
 echo "  1. Verify Proxmox web UI is still accessible at https://${MGMT_IP:-<management-ip>}:8006"
-echo "     (vmbr0 was not modified — management access is unchanged)"
+echo "     (vmbr0 was not modified, management access is unchanged)"
 echo ""
 echo "  2. Download the OPNsense installer ISO:"
 echo "     cd /var/lib/vz/template/iso/"

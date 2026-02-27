@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script:      06-pihole-lxc.sh
 # Description: Creates a Debian 12 LXC container and installs Pi-hole unattended.
-#              Attaches to vmbr2 (Internal — 10.10.10.0/24). Run from Proxmox host.
+#              Attaches to vmbr2 (Internal, 10.10.10.0/24). Run from Proxmox host.
 # Blog post:   https://abrictosecurity.com/homelab-series-domain-ssl-pihole-samba
 # Usage:       sudo bash 06-pihole-lxc.sh
 # Dependencies: pct, pvesm, pveam (Proxmox VE host tools)
@@ -41,7 +41,7 @@ ip link show vmbr2 &>/dev/null \
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║          Abricto HomeLab — 06-pihole-lxc.sh              ║${RESET}"
+echo -e "${BOLD}║          Abricto HomeLab, 06-pihole-lxc.sh              ║${RESET}"
 echo -e "${BOLD}║   Create Debian 12 LXC and install Pi-hole unattended    ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
@@ -143,7 +143,7 @@ printf "  %-14s  %s MB\n" "Memory:" "$MEMORY"
 printf "  %-14s  %s\n" "Cores:"     "$CORES"
 printf "  %-14s  %s  gw: %s\n" "Network:" "$CT_IP" "$CT_GW"
 printf "  %-14s  %s\n" "Bridge:"    "vmbr2 (Internal)"
-printf "  %-14s  %s\n" "Nameserver:" "1.1.1.1 (temporary — will be self-referential after install)"
+printf "  %-14s  %s\n" "Nameserver:" "1.1.1.1 (temporary, will be self-referential after install)"
 echo ""
 echo -e "${BOLD}──────────────────────────────────────────────────────────${RESET}"
 echo ""
@@ -210,7 +210,7 @@ echo -e "${GREEN}${BOLD}║              Pi-hole installed successfully.        
 echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "${BOLD}Access:${RESET}"
-echo "  http://${CT_IP_CLEAN}/admin   (HTTP — no cert yet)"
+echo "  http://${CT_IP_CLEAN}/admin   (HTTP, no cert yet)"
 echo ""
 echo -e "${BOLD}Next steps:${RESET}"
 echo "  1. Set the Pi-hole admin password:"

@@ -47,12 +47,12 @@ ip link show vmbr2 &>/dev/null \
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║           Abricto HomeLab — 08-samba-lxc.sh              ║${RESET}"
+echo -e "${BOLD}║           Abricto HomeLab, 08-samba-lxc.sh              ║${RESET}"
 echo -e "${BOLD}║   Create Debian 12 LXC and provision Samba AD DC         ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 warn "Samba AD DC runs in a PRIVILEGED container (required for kernel capabilities)."
-warn "Privileged containers run as root on the host — use only in trusted lab networks."
+warn "Privileged containers run as root on the host, use only in trusted lab networks."
 echo ""
 
 # ─── Storage pool selection ───────────────────────────────────────────────────
@@ -173,7 +173,7 @@ printf "  %-16s  %s  gw: %s\n" "Network:" "$CT_IP" "$CT_GW"
 printf "  %-16s  %s\n" "Bridge:"       "vmbr2 (Internal)"
 printf "  %-16s  %s\n" "AD Realm:"     "$REALM"
 printf "  %-16s  %s\n" "NetBIOS:"      "$NETBIOS"
-printf "  %-16s  %s\n" "Nameserver:"   "10.10.10.2 (Pi-hole — must be running)"
+printf "  %-16s  %s\n" "Nameserver:"   "10.10.10.2 (Pi-hole, must be running)"
 printf "  %-16s  %s\n" "Privileged:"   "yes (required for Samba AD DC)"
 echo ""
 echo -e "${BOLD}──────────────────────────────────────────────────────────${RESET}"

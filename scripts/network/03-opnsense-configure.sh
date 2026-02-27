@@ -1,9 +1,9 @@
 #!/bin/bash
 # Script:      03-opnsense-configure.sh
 # Description: Two-phase script run on the Proxmox host.
-#              Phase 0 — Creates a Debian 12 LXC on vmbr2 (Internal) as the
+#              Phase 0: Creates a Debian 12 LXC on vmbr2 (Internal) as the
 #                        permanent internal admin machine for web GUI access.
-#              Phase 1 — Configures OPNsense post-install via the REST API:
+#              Phase 1: Configures OPNsense post-install via the REST API:
 #                        enables and names the DMZ (OPT1) interface, then
 #                        creates three baseline firewall rules:
 #                          Allow Internal (LAN) → WAN
@@ -11,7 +11,7 @@
 #                          Block  DMZ → Internal (LAN)
 # Blog post:   https://abrictosecurity.com/homelab-series-network-architecture
 # Usage:       bash 03-opnsense-configure.sh <api_key> <api_secret>
-# Run from:    Proxmox host (root) — requires pct and curl
+# Run from:    Proxmox host (root), requires pct and curl
 # Dependencies: pct (Proxmox LXC), pveam (template manager), curl
 #
 # SECURITY NOTE: API credentials are passed as command-line arguments.
@@ -61,7 +61,7 @@ AUTH="${API_KEY}:${API_SECRET}"
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║      Abricto HomeLab — 03-opnsense-configure.sh          ║${RESET}"
+echo -e "${BOLD}║      Abricto HomeLab, 03-opnsense-configure.sh          ║${RESET}"
 echo -e "${BOLD}║   Phase 0: Create internal admin LXC on vmbr2            ║${RESET}"
 echo -e "${BOLD}║   Phase 1: Configure DMZ interface + firewall rules      ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
@@ -92,10 +92,10 @@ BASE_URL="https://${OPNSENSE_IP}/api"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PHASE 0 — Internal admin LXC
+# PHASE 0, Internal admin LXC
 # ═══════════════════════════════════════════════════════════════════════════════
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║             Phase 0 — Internal Admin LXC                 ║${RESET}"
+echo -e "${BOLD}║             Phase 0: Internal Admin LXC                 ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 echo "  A lightweight Debian 12 LXC on vmbr2 gives you a persistent machine"
@@ -276,7 +276,7 @@ if [[ "$CREATE_LXC" == "y" || "$CREATE_LXC" == "yes" ]]; then
                 break
             fi
             [[ $i -eq 15 ]] \
-                && warn "LXC network not confirmed after 15s — continuing anyway. Check with: pct exec ${LXC_CTID} -- ping ${OPNSENSE_IP}"
+                && warn "LXC network not confirmed after 15s, continuing anyway. Check with: pct exec ${LXC_CTID} -- ping ${OPNSENSE_IP}"
             sleep 1
         done
         echo ""
@@ -284,10 +284,10 @@ if [[ "$CREATE_LXC" == "y" || "$CREATE_LXC" == "yes" ]]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# PHASE 1 — OPNsense API configuration
+# PHASE 1, OPNsense API configuration
 # ═══════════════════════════════════════════════════════════════════════════════
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║         Phase 1 — OPNsense API Configuration             ║${RESET}"
+echo -e "${BOLD}║         Phase 1: OPNsense API Configuration             ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
 
@@ -311,7 +311,7 @@ if ! ip addr show vmbr2 | grep -q "${HOST_BRIDGE_IP}"; then
     BRIDGE_IP_ADDED=true
     ok "Host IP added. Will be removed automatically on script exit."
 else
-    info "Host IP ${HOST_BRIDGE_IP} already present on vmbr2 — skipping."
+    info "Host IP ${HOST_BRIDGE_IP} already present on vmbr2, skipping."
 fi
 echo ""
 
@@ -333,7 +333,7 @@ api_call() {
     fi
 
     [[ -z "$response" ]] \
-        && die "Empty response from ${endpoint} — is OPNsense running and the API enabled?\n       OPNsense: System → Settings → Administration → Enable API"
+        && die "Empty response from ${endpoint}, is OPNsense running and the API enabled?\n       OPNsense: System → Settings → Administration → Enable API"
     echo "$response"
 }
 
@@ -353,7 +353,7 @@ fi
 echo ""
 
 # ─── Step 2: Enable and name the DMZ interface (OPT1 / vtnet2) ───────────────
-echo -e "${BOLD}Step 1 of 3 — Configure DMZ interface${RESET}"
+echo -e "${BOLD}Step 1 of 3, Configure DMZ interface${RESET}"
 echo ""
 info "Enabling OPT1 and setting description to 'DMZ' ..."
 
@@ -363,7 +363,7 @@ response=$(api_call POST "/interfaces/overview/setInterfaceIdentifier" \
 if echo "$response" | grep -qi '"result"\s*:\s*"saved"\|"status"\s*:\s*"ok"'; then
     ok "DMZ interface configured."
 else
-    warn "Unexpected response — verify OPT1 in OPNsense: Interfaces → Assignments."
+    warn "Unexpected response, verify OPT1 in OPNsense: Interfaces → Assignments."
     warn "Response: ${response}"
 fi
 
@@ -373,7 +373,7 @@ ok "Interface changes applied."
 echo ""
 
 # ─── Step 3: Firewall rules ───────────────────────────────────────────────────
-echo -e "${BOLD}Step 2 of 3 — Baseline firewall rules${RESET}"
+echo -e "${BOLD}Step 2 of 3, Baseline firewall rules${RESET}"
 echo ""
 echo "  Rules to be created:"
 echo ""
@@ -475,7 +475,7 @@ fi
 echo ""
 
 # ─── Step 4: Apply firewall changes ───────────────────────────────────────────
-echo -e "${BOLD}Step 3 of 3 — Apply changes${RESET}"
+echo -e "${BOLD}Step 3 of 3, Apply changes${RESET}"
 echo ""
 info "Applying firewall rules ..."
 api_call POST "/firewall/filter/apply" > /dev/null
@@ -506,12 +506,12 @@ if [[ -n "$LXC_CTID" ]]; then
     echo ""
     echo -e "${BOLD}Accessing the OPNsense web GUI from your laptop:${RESET}"
     echo ""
-    echo "  Option 1 — SSH tunnel (recommended):"
+    echo "  Option 1, SSH tunnel (recommended):"
     echo "    Run on your laptop:"
     echo "      ssh -L 8443:${OPNSENSE_IP}:443 root@<proxmox-mgmt-ip> -N"
     echo "    Then open: https://localhost:8443"
     echo ""
-    echo "  Option 2 — from inside the LXC:"
+    echo "  Option 2, from inside the LXC:"
     echo "    pct enter ${LXC_CTID}"
     echo "    curl -sk https://${OPNSENSE_IP} | grep -i opnsense"
     echo ""
@@ -531,6 +531,6 @@ echo "    ping -c3 1.1.1.1          → should succeed  (internet via OPNsense)"
 echo "    ping -c3 10.20.20.1       → should fail     (DMZ blocked)"
 echo ""
 echo -e "${BOLD}Next:${RESET}"
-echo "  Post 3 — Domain → Cloudflare DNS → Let's Encrypt wildcard SSL"
+echo "  Post 3, Domain → Cloudflare DNS → Let's Encrypt wildcard SSL"
 echo "  Repository: https://github.com/Cab00se-AS/homelab-series"
 echo ""

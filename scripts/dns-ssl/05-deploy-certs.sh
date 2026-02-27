@@ -41,7 +41,7 @@ PIHOLE_CTID=101   # Update if your Pi-hole LXC uses a different container ID.
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║         Abricto HomeLab — 05-deploy-certs.sh             ║${RESET}"
+echo -e "${BOLD}║         Abricto HomeLab, 05-deploy-certs.sh             ║${RESET}"
 echo -e "${BOLD}║   Deploy wildcard cert to Proxmox and Pi-hole            ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
 echo ""
@@ -105,10 +105,10 @@ pct exec "${PIHOLE_CTID}" -- bash -c '
 
   # Bail if ssl.engine is already configured (re-run safety)
   if [[ -f "$SSL_CONF" ]]; then
-    echo "  SSL config already present at $SSL_CONF — skipping write."
+    echo "  SSL config already present at $SSL_CONF, skipping write."
   else
     cat > "$SSL_CONF" << EOF
-# Pi-hole SSL — managed by 05-deploy-certs.sh
+# Pi-hole SSL, managed by 05-deploy-certs.sh
 # Enables HTTPS on port 443 using the Let'\''s Encrypt wildcard cert.
 server.modules += ("mod_openssl")
 
@@ -127,9 +127,9 @@ pct exec "${PIHOLE_CTID}" -- systemctl restart lighttpd
 ok "Pi-hole lighttpd restarted."
 echo ""
 
-# ─── OPNsense — manual step ───────────────────────────────────────────────────
+# ─── OPNsense, manual step ───────────────────────────────────────────────────
 echo -e "${BOLD}── OPNsense ─────────────────────────────────────────────────${RESET}"
-warn "OPNsense cert import requires the web UI (or OPNsense API — see blog post)."
+warn "OPNsense cert import requires the web UI (or OPNsense API, see blog post)."
 echo "  Steps:"
 echo "    1. Download cert files from the Proxmox host:"
 echo "       ${CERT_DIR}/fullchain.pem"
