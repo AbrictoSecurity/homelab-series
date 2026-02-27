@@ -10,7 +10,7 @@ Every step in the blog posts has a corresponding script here. Clone the repo, cu
 
 | Post | Title | Status | Blog Link |
 |------|-------|--------|-----------|
-| 1 | Proxmox on Refurbished Servers | Published | *(link when available)* |
+| 1 | Proxmox on Refurbished Servers | Published | [Read Post 1](https://abrictosecurity.com/homelab-series-proxmox-on-refurbished-servers/) |
 | 2 | Network Architecture, Bridges & OPNsense | In Progress | *(link when available)* |
 | 3 | Domain, SSL, Pi-hole & Samba AD | In Progress | *(link when available)* |
 | 4 | Kali Linux VM | Planned | *(link when available)* |
@@ -24,7 +24,7 @@ Every step in the blog posts has a corresponding script here. Clone the repo, cu
 - A registered domain name (Post 3 uses Porkbun + Cloudflare)
 - Basic familiarity with Linux CLI and networking concepts
 
-See [Post 1](*(link when available)*) for the full hardware setup and Proxmox installation walkthrough.
+See [Post 1](https://abrictosecurity.com/homelab-series-proxmox-on-refurbished-servers/) for the full hardware setup and Proxmox installation walkthrough.
 
 ---
 
