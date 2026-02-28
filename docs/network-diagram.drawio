@@ -1,236 +1,76 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1"
-              connect="1" arrows="1" fold="1" page="1" pageScale="1"
-              pageWidth="1654" pageHeight="1169" math="0" shadow="0">
-  <root>
-    <mxCell id="0" />
-    <mxCell id="1" parent="0" />
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         TITLE
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="100" value="Abricto HomeLab — Network Architecture"
-            style="text;html=1;align=center;fontSize=22;fontStyle=1;
-                   strokeColor=none;fillColor=none;"
-            vertex="1" parent="1">
-      <mxGeometry x="380" y="10" width="880" height="40" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         INTERNET
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="2" value="&lt;b&gt;Internet&lt;/b&gt;"
-            style="ellipse;whiteSpace=wrap;html=1;
-                   fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;
-                   fontSize=14;fontStyle=1;"
-            vertex="1" parent="1">
-      <mxGeometry x="730" y="60" width="160" height="70" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         HOME ROUTER
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="3" value="&lt;b&gt;Home Router&lt;/b&gt;&lt;br&gt;Gateway: 192.168.1.1&lt;br&gt;DHCP: 192.168.1.x"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#ffe6cc;strokeColor=#d6b656;strokeWidth=2;
-                   fontSize=11;"
-            vertex="1" parent="1">
-      <mxGeometry x="710" y="180" width="200" height="75" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         PROXMOX HOST — outer container
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="4" value="&lt;b&gt;Proxmox VE Host&lt;/b&gt;"
-            style="rounded=0;whiteSpace=wrap;html=1;
-                   fillColor=#f5f5f5;strokeColor=#555555;strokeWidth=3;
-                   fontSize=17;fontStyle=1;
-                   verticalAlign=top;align=left;spacingLeft=14;spacingTop=8;
-                   opacity=25;"
-            vertex="1" parent="1">
-      <mxGeometry x="30" y="295" width="1590" height="840" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         vmbr0 — MANAGEMENT ZONE
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="5" value="&lt;b&gt;vmbr0 — Management&lt;/b&gt;&lt;br&gt;eno1 | 192.168.1.0/24"
-            style="rounded=0;whiteSpace=wrap;html=1;
-                   fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;
-                   fontSize=12;verticalAlign=top;align=center;opacity=70;"
-            vertex="1" parent="1">
-      <mxGeometry x="1090" y="315" width="490" height="230" as="geometry" />
-    </mxCell>
-
-    <mxCell id="6" value="&lt;b&gt;Proxmox VE&lt;/b&gt;&lt;br&gt;proxmox.yourname-lab.com&lt;br&gt;192.168.1.100 : 8006"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;
-                   fontSize=11;"
-            vertex="1" parent="1">
-      <mxGeometry x="1155" y="390" width="260" height="100" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         vmbr1 — WAN BRIDGE INDICATOR
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="7" value="&lt;b&gt;vmbr1 — WAN&lt;/b&gt;&lt;br&gt;eno2 | DHCP from router"
-            style="rounded=0;whiteSpace=wrap;html=1;
-                   fillColor=#ffe6cc;strokeColor=#d6b656;strokeWidth=2;
-                   fontSize=11;opacity=90;"
-            vertex="1" parent="1">
-      <mxGeometry x="450" y="320" width="240" height="60" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         OPNsense VM
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="8" value="&lt;b&gt;OPNsense CE | VM 100&lt;/b&gt;&lt;br&gt;&lt;br&gt;vtnet0 ← WAN  (vmbr1)&lt;br&gt;vtnet1 → Internal (vmbr2) | 10.10.10.1&lt;br&gt;vtnet2 → DMZ      (vmbr3) | 10.20.20.1"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=3;
-                   fontSize=12;"
-            vertex="1" parent="1">
-      <mxGeometry x="545" y="460" width="490" height="135" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         vmbr2 — INTERNAL ZONE
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="9" value="&lt;b&gt;vmbr2 — Internal&lt;/b&gt;&lt;br&gt;eno3 | 10.10.10.0/24"
-            style="rounded=0;whiteSpace=wrap;html=1;
-                   fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;
-                   fontSize=12;verticalAlign=top;align=center;opacity=70;"
-            vertex="1" parent="1">
-      <mxGeometry x="50" y="675" width="970" height="430" as="geometry" />
-    </mxCell>
-
-    <mxCell id="10" value="&lt;b&gt;Pi-hole | CT 101&lt;/b&gt;&lt;br&gt;pihole.yourname-lab.com&lt;br&gt;10.10.10.2&lt;br&gt;DNS + Ad-blocking"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;
-                   fontSize=11;"
-            vertex="1" parent="1">
-      <mxGeometry x="80" y="790" width="240" height="105" as="geometry" />
-    </mxCell>
-
-    <mxCell id="11" value="&lt;b&gt;Samba AD DC | CT 102&lt;/b&gt;&lt;br&gt;dc01.corp.yourname-lab.com&lt;br&gt;10.10.10.3&lt;br&gt;Active Directory / Kerberos"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;
-                   fontSize=11;"
-            vertex="1" parent="1">
-      <mxGeometry x="385" y="790" width="240" height="105" as="geometry" />
-    </mxCell>
-
-    <mxCell id="12" value="&lt;b&gt;admin-internal | CT 110&lt;/b&gt;&lt;br&gt;admin-internal.yourname-lab.com&lt;br&gt;10.10.10.10&lt;br&gt;Admin LXC (Debian 12)"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;
-                   fontSize=11;"
-            vertex="1" parent="1">
-      <mxGeometry x="690" y="790" width="240" height="105" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         vmbr3 — DMZ ZONE
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="13" value="&lt;b&gt;vmbr3 — DMZ&lt;/b&gt;&lt;br&gt;eno4 | 10.20.20.0/24"
-            style="rounded=0;whiteSpace=wrap;html=1;
-                   fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;
-                   fontSize=12;verticalAlign=top;align=center;opacity=70;"
-            vertex="1" parent="1">
-      <mxGeometry x="1060" y="675" width="520" height="430" as="geometry" />
-    </mxCell>
-
-    <mxCell id="14" value="&lt;b&gt;Future Services&lt;/b&gt;&lt;br&gt;10.20.20.x&lt;br&gt;Internet-facing workloads&lt;br&gt;(Post 4+)"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;
-                   fontSize=11;dashed=1;"
-            vertex="1" parent="1">
-      <mxGeometry x="1120" y="790" width="240" height="105" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         LEGEND BOXES
-    ════════════════════════════════════════════════════════════════════════ -->
-    <mxCell id="15" value="&lt;b&gt;OPNsense Firewall Rules&lt;/b&gt;&lt;br&gt;&#x2714;  Internal &#x2192; WAN (allow)&lt;br&gt;&#x2718;  Internal &#x2192; DMZ (block)&lt;br&gt;&#x2718;  DMZ &#x2192; Internal (block)"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#ffffc0;strokeColor=#b8860b;strokeWidth=1;
-                   fontSize=11;align=left;spacingLeft=10;spacingTop=4;"
-            vertex="1" parent="1">
-      <mxGeometry x="1120" y="935" width="280" height="105" as="geometry" />
-    </mxCell>
-
-    <mxCell id="16" value="&lt;b&gt;DNS Resolution Flow&lt;/b&gt;&lt;br&gt;Clients &#x2192; Pi-hole (10.10.10.2)&lt;br&gt;corp.* &#x2192; Samba DC (10.10.10.3)&lt;br&gt;External &#x2192; Cloudflare 1.1.1.1"
-            style="rounded=1;whiteSpace=wrap;html=1;
-                   fillColor=#ffffc0;strokeColor=#b8860b;strokeWidth=1;
-                   fontSize=11;align=left;spacingLeft=10;spacingTop=4;"
-            vertex="1" parent="1">
-      <mxGeometry x="80" y="940" width="310" height="100" as="geometry" />
-    </mxCell>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         EDGES
-    ════════════════════════════════════════════════════════════════════════ -->
-
-    <!-- Internet → Home Router -->
-    <mxCell id="20"
-            style="edgeStyle=orthogonalEdgeStyle;html=1;
-                   strokeWidth=2;strokeColor=#555555;"
-            edge="1" source="2" target="3" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-    <!-- Home Router → OPNsense   (WAN | eno2 → vmbr1) -->
-    <mxCell id="21" value="eno2 &#x2192; vmbr1 (WAN)"
-            style="edgeStyle=orthogonalEdgeStyle;html=1;
-                   strokeWidth=2;strokeColor=#d6b656;
-                   fontSize=10;fontStyle=1;align=left;
-                   exitX=0.25;exitY=1;exitDx=0;exitDy=0;
-                   entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-            edge="1" source="3" target="8" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-    <!-- Home Router → Proxmox VE   (Management | eno1 → vmbr0) -->
-    <mxCell id="22" value="eno1 &#x2192; vmbr0 (Mgmt)"
-            style="edgeStyle=orthogonalEdgeStyle;html=1;
-                   strokeWidth=2;strokeColor=#6c8ebf;
-                   fontSize=10;fontStyle=1;align=right;
-                   exitX=1;exitY=0.5;exitDx=0;exitDy=0;
-                   entryX=0.25;entryY=0;entryDx=0;entryDy=0;"
-            edge="1" source="3" target="6" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-    <!-- OPNsense → Internal zone   (vtnet1 | vmbr2 | 10.10.10.1) -->
-    <mxCell id="23" value="vtnet1 | 10.10.10.1"
-            style="edgeStyle=orthogonalEdgeStyle;html=1;
-                   strokeWidth=2;strokeColor=#82b366;
-                   fontSize=10;fontStyle=1;
-                   exitX=0.25;exitY=1;exitDx=0;exitDy=0;
-                   entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-            edge="1" source="8" target="9" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-    <!-- OPNsense → DMZ zone   (vtnet2 | vmbr3 | 10.20.20.1) -->
-    <mxCell id="24" value="vtnet2 | 10.20.20.1"
-            style="edgeStyle=orthogonalEdgeStyle;html=1;
-                   strokeWidth=2;strokeColor=#b85450;
-                   fontSize=10;fontStyle=1;
-                   exitX=0.75;exitY=1;exitDx=0;exitDy=0;
-                   entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
-            edge="1" source="8" target="13" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-    <!-- Pi-hole → Samba DC   (conditional DNS forwarding, dashed) -->
-    <mxCell id="25" value="corp.* forwarding"
-            style="dashed=1;endArrow=open;endFill=0;html=1;
-                   strokeColor=#82b366;strokeWidth=1;
-                   fontSize=9;
-                   exitX=1;exitY=0.5;exitDx=0;exitDy=0;
-                   entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
-            edge="1" source="10" target="11" parent="1">
-      <mxGeometry relative="1" as="geometry" />
-    </mxCell>
-
-  </root>
-</mxGraphModel>
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.0">
+  <diagram id="pp8mIx2cyS0TJgPFf00z" name="Page-1">
+    <mxGraphModel dx="1783" dy="971" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="100" parent="1" style="text;html=1;align=center;fontSize=22;fontStyle=1;                    strokeColor=none;fillColor=none;" value="Abricto HomeLab — Network Architecture" vertex="1">
+          <mxGeometry height="40" width="880" x="380" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="2" parent="1" style="ellipse;whiteSpace=wrap;html=1;                    fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;                    fontSize=14;fontStyle=1;" value="&lt;b&gt;Internet&lt;/b&gt;" vertex="1">
+          <mxGeometry height="70" width="160" x="730" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#ffe6cc;strokeColor=#d6b656;strokeWidth=2;                    fontSize=11;" value="&lt;b&gt;Home Router&lt;/b&gt;&lt;br&gt;Gateway: 192.168.1.1&lt;br&gt;DHCP: 192.168.1.x" vertex="1">
+          <mxGeometry height="75" width="200" x="710" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;                    fillColor=#f5f5f5;strokeColor=#555555;strokeWidth=3;                    fontSize=17;fontStyle=1;                    verticalAlign=top;align=left;spacingLeft=14;spacingTop=8;                    opacity=25;" value="&lt;b&gt;Proxmox VE Host&lt;/b&gt;" vertex="1">
+          <mxGeometry height="840" width="1590" x="30" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;                    fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;                    fontSize=12;verticalAlign=top;align=center;opacity=70;" value="&lt;b&gt;vmbr0 — Management&lt;/b&gt;&lt;br&gt;eno1 | 192.168.1.0/24" vertex="1">
+          <mxGeometry height="175" width="460" x="1120" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;                    fontSize=11;" value="&lt;b&gt;Proxmox VE&lt;/b&gt;&lt;br&gt;proxmox.yourname-lab.com&lt;br&gt;192.168.1.100 : 8006" vertex="1">
+          <mxGeometry height="100" width="260" x="1300" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;                    fillColor=#ffe6cc;strokeColor=#d6b656;strokeWidth=2;                    fontSize=11;opacity=90;" value="&lt;b&gt;vmbr1 — WAN&lt;/b&gt;&lt;br&gt;eno2 | DHCP from router" vertex="1">
+          <mxGeometry height="60" width="240" x="450" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=3;                    fontSize=12;" value="&lt;b&gt;OPNsense CE | VM 100&lt;/b&gt;&lt;br&gt;&lt;br&gt;vtnet0 ← WAN  (vmbr1)&lt;br&gt;vtnet1 → Internal (vmbr2) | 10.10.10.1&lt;br&gt;vtnet2 → DMZ      (vmbr3) | 10.20.20.1" vertex="1">
+          <mxGeometry height="135" width="490" x="565" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;                    fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;                    fontSize=12;verticalAlign=top;align=center;opacity=70;" value="&lt;b&gt;vmbr2 — Internal&lt;/b&gt;&lt;br&gt;eno3 | 10.10.10.0/24" vertex="1">
+          <mxGeometry height="365" width="970" x="50" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;                    fontSize=11;" value="&lt;b&gt;Pi-hole | CT 101&lt;/b&gt;&lt;br&gt;pihole.yourname-lab.com&lt;br&gt;10.10.10.2&lt;br&gt;DNS + Ad-blocking" vertex="1">
+          <mxGeometry height="105" width="240" x="80" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;                    fontSize=11;" value="&lt;b&gt;Samba AD DC | CT 102&lt;/b&gt;&lt;br&gt;dc01.corp.yourname-lab.com&lt;br&gt;10.10.10.3&lt;br&gt;Active Directory / Kerberos" vertex="1">
+          <mxGeometry height="105" width="240" x="385" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;                    fontSize=11;" value="&lt;b&gt;admin-internal | CT 110&lt;/b&gt;&lt;br&gt;admin-internal.yourname-lab.com&lt;br&gt;10.10.10.10&lt;br&gt;Admin LXC (Debian 12)" vertex="1">
+          <mxGeometry height="105" width="240" x="690" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="13" parent="1" style="rounded=0;whiteSpace=wrap;html=1;                    fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;                    fontSize=12;verticalAlign=top;align=center;opacity=70;" value="&lt;b&gt;vmbr3 — DMZ&lt;/b&gt;&lt;br&gt;eno4 | 10.20.20.0/24" vertex="1">
+          <mxGeometry height="365" width="520" x="1060" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=2;                    fontSize=11;dashed=1;" value="&lt;b&gt;Future Services&lt;/b&gt;&lt;br&gt;10.20.20.x&lt;br&gt;Internet-facing workloads&lt;br&gt;(Post 4+)" vertex="1">
+          <mxGeometry height="105" width="240" x="1120" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#ffffc0;strokeColor=#b8860b;strokeWidth=1;                    fontSize=11;align=left;spacingLeft=10;spacingTop=4;" value="&lt;b&gt;OPNsense Firewall Rules&lt;/b&gt;&lt;br&gt;✔  Internal → WAN (allow)&lt;br&gt;✘  Internal → DMZ (block)&lt;br&gt;✘  DMZ → Internal (block)" vertex="1">
+          <mxGeometry height="105" width="280" x="1120" y="935" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;                    fillColor=#ffffc0;strokeColor=#b8860b;strokeWidth=1;                    fontSize=11;align=left;spacingLeft=10;spacingTop=4;" value="&lt;b&gt;DNS Resolution Flow&lt;/b&gt;&lt;br&gt;Clients → Pi-hole (10.10.10.2)&lt;br&gt;corp.* → Samba DC (10.10.10.3)&lt;br&gt;External → Cloudflare 1.1.1.1" vertex="1">
+          <mxGeometry height="100" width="310" x="80" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="20" edge="1" parent="1" source="2" style="edgeStyle=orthogonalEdgeStyle;html=1;                    strokeWidth=2;strokeColor=#555555;" target="3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;html=1;                    strokeWidth=2;strokeColor=#d6b656;                    fontSize=10;fontStyle=1;align=left;                    exitX=0.25;exitY=1;exitDx=0;exitDy=0;                    entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="8" value="eno2 → vmbr1 (WAN)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="22" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;html=1;                    strokeWidth=2;strokeColor=#6c8ebf;                    fontSize=10;fontStyle=1;align=right;                    exitX=1;exitY=0.5;exitDx=0;exitDy=0;                    entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="6" value="eno1 → vmbr0 (Mgmt)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="23" edge="1" parent="1" source="8" style="edgeStyle=orthogonalEdgeStyle;html=1;                    strokeWidth=2;strokeColor=#82b366;                    fontSize=10;fontStyle=1;                    exitX=0.25;exitY=1;exitDx=0;exitDy=0;                    entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="9" value="vtnet1 | 10.10.10.1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="24" edge="1" parent="1" source="8" style="edgeStyle=orthogonalEdgeStyle;html=1;                    strokeWidth=2;strokeColor=#b85450;                    fontSize=10;fontStyle=1;                    exitX=0.75;exitY=1;exitDx=0;exitDy=0;                    entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="13" value="vtnet2 | 10.20.20.1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="25" edge="1" parent="1" source="10" style="dashed=1;endArrow=open;endFill=0;html=1;                    strokeColor=#82b366;strokeWidth=1;                    fontSize=9;                    exitX=1;exitY=0.5;exitDx=0;exitDy=0;                    entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="11" value="corp.* forwarding">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

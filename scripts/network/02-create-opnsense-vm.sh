@@ -37,7 +37,7 @@ command -v pvesm &>/dev/null || die "pvesm not found. Is this a Proxmox VE host?
 # ─── Banner ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}╔══════════════════════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║      Abricto HomeLab, 02-create-opnsense-vm.sh          ║${RESET}"
+echo -e "${BOLD}║      Abricto HomeLab, 02-create-opnsense-vm.sh           ║${RESET}"
 echo -e "${BOLD}║  Creates the OPNsense edge firewall VM via Proxmox qm    ║${RESET}"
 echo -e "${BOLD}║  WAN → vmbr1   Internal → vmbr2   DMZ → vmbr3            ║${RESET}"
 echo -e "${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}"
