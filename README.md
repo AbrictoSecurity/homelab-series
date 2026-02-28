@@ -34,7 +34,7 @@ Clone the repo to your Proxmox host:
 
 ```bash
 apt install git -y
-git clone https://github.com/abricto-security/homelab-series.git /opt/homelab
+git clone https://github.com/AbrictoSecurity/homelab-series.git /opt/homelab
 cd /opt/homelab
 ```
 
