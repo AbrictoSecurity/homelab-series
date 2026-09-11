@@ -53,10 +53,11 @@ echo ""
 # Format: "hostname.domain IP"
 # Keep this list in sync with docs/ip-allocation.md and the reference table in CLAUDE.md.
 RECORDS=(
-    "proxmox.${DOMAIN}        192.168.1.100"
-    "edge.${DOMAIN}           10.10.10.1"
-    "pihole.${DOMAIN}         10.10.10.2"
-    "dc01.corp.${DOMAIN}      10.10.10.3"
+    "proxmox.${DOMAIN}           192.168.1.100"
+    "edge.${DOMAIN}              10.10.10.1"
+    "admin-internal.${DOMAIN}    10.10.10.10"
+    "pihole.${DOMAIN}            10.10.10.2"
+    "dc01.corp.${DOMAIN}         10.10.10.3"
 )
 
 CUSTOM_LIST="/etc/pihole/custom.list"
