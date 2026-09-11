@@ -11,7 +11,7 @@ Every step in the blog posts has a corresponding script here. Clone the repo, cu
 | Post | Title | Status | Blog Link |
 |------|-------|--------|-----------|
 | 1 | Proxmox on Refurbished Servers | Published | [Read Post 1](https://abrictosecurity.com/homelab-series-proxmox-on-refurbished-servers/) |
-| 2 | Network Architecture, Bridges & OPNsense | In Progress | *(link when available)* |
+| 2 | Network Architecture, Bridges & OPNsense | Published | [Read Post 2](https://abrictosecurity.com/proxmox-opnsense-firewall-setup/) |
 | 3 | Domain, SSL, Pi-hole & Samba AD | In Progress | *(link when available)* |
 | 4 | Kali Linux VM | Planned | *(link when available)* |
 
@@ -61,6 +61,7 @@ cd /opt/homelab
 |----------|----|------|
 | proxmox.yourname-lab.com | 192.168.1.100 | Proxmox hypervisor |
 | edge.yourname-lab.com | 10.10.10.1 | OPNsense firewall |
+| admin-internal.yourname-lab.com | 10.10.10.10 | Internal admin LXC |
 | pihole.yourname-lab.com | 10.10.10.2 | Pi-hole DNS |
 | dc01.corp.yourname-lab.com | 10.10.10.3 | Samba AD DC |
 

@@ -3,7 +3,7 @@
 # Description: Interactively creates vmbr1 (Edge/WAN), vmbr2 (Internal),
 #              and vmbr3 (DMZ) on a Proxmox VE host. vmbr0 (management) is
 #              created by the Proxmox installer and is never modified here.
-# Blog post:   https://abrictosecurity.com/homelab-series-network-architecture
+# Blog post:   https://abrictosecurity.com/proxmox-opnsense-firewall-setup/
 # Usage:       sudo bash 01-create-bridges.sh
 # Dependencies: ifreload (ifupdown2, default on Proxmox VE), brctl (bridge-utils)
 

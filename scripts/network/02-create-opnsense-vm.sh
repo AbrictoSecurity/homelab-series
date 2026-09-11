@@ -3,7 +3,7 @@
 # Description: Interactively creates the OPNsense edge firewall VM on Proxmox VE
 #              using the qm CLI. Discovers available ISOs and storage pools
 #              from the host, nothing is hardcoded.
-# Blog post:   https://abrictosecurity.com/homelab-series-network-architecture
+# Blog post:   https://abrictosecurity.com/proxmox-opnsense-firewall-setup/
 # Usage:       sudo bash 02-create-opnsense-vm.sh
 # Dependencies: Proxmox VE (qm, pvesm), OPNsense ISO in /var/lib/vz/template/iso/
 

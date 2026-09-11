@@ -9,7 +9,7 @@
 #                          Allow Internal (LAN) → WAN
 #                          Block  Internal (LAN) → DMZ
 #                          Block  DMZ → Internal (LAN)
-# Blog post:   https://abrictosecurity.com/homelab-series-network-architecture
+# Blog post:   https://abrictosecurity.com/proxmox-opnsense-firewall-setup/
 # Usage:       bash 03-opnsense-configure.sh <api_key> <api_secret>
 # Run from:    Proxmox host (root), requires pct and curl
 # Dependencies: pct (Proxmox LXC), pveam (template manager), curl

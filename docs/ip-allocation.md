@@ -23,7 +23,7 @@ Update this file whenever a new service is added.
 | proxmox.yourname-lab.com | 192.168.1.100 | Management | Proxmox VE hypervisor | 1 |
 | edge.yourname-lab.com | 10.10.10.1 | Internal | OPNsense firewall (LAN interface) | 2 |
 | edge.yourname-lab.com | 10.20.20.1 | DMZ | OPNsense firewall (DMZ interface) | 2 |
-| admin.yourname-lab.com | 10.10.10.10 | Internal | Internal admin LXC (CT 110, Debian 12) | 2 |
+| admin-internal.yourname-lab.com | 10.10.10.10 | Internal | Internal admin LXC (CT 110, Debian 12) | 2 |
 | pihole.yourname-lab.com | 10.10.10.2 | Internal | Pi-hole DNS resolver | 3 |
 | dc01.corp.yourname-lab.com | 10.10.10.3 | Internal | Samba Active Directory DC | 3 |
 
@@ -59,7 +59,7 @@ Update this file whenever a new service is added.
 |----------|----|------|
 | proxmox.yourname-lab.com | 192.168.1.100 | A |
 | edge.yourname-lab.com | 10.10.10.1 | A |
-| admin.yourname-lab.com | 10.10.10.10 | A |
+| admin-internal.yourname-lab.com | 10.10.10.10 | A |
 | pihole.yourname-lab.com | 10.10.10.2 | A |
 | dc01.corp.yourname-lab.com | 10.10.10.3 | A |
 
