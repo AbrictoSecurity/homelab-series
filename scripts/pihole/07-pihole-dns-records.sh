@@ -61,50 +61,94 @@ RECORDS=(
 )
 
 CUSTOM_LIST="/etc/pihole/custom.list"
+PIHOLE_V6_CONFIG="/etc/pihole/pihole.toml"
 
-# ─── Backup custom.list ───────────────────────────────────────────────────────
-if [[ -f "$CUSTOM_LIST" ]]; then
-    BACKUP="${CUSTOM_LIST}.bak.$(date +%Y%m%d%H%M%S)"
-    info "Backing up ${CUSTOM_LIST} → ${BACKUP}"
-    cp "$CUSTOM_LIST" "$BACKUP"
-    ok "Backup created."
+# ─── Pi-hole v6: local records live in pihole.toml, not custom.list ───────────
+#
+# v6 no longer reads /etc/pihole/custom.list at all. Local A records moved into
+# pihole.toml under dns.hosts, managed with 'pihole-FTL --config'. Writing
+# custom.list on a v6 install is silently inert: the file is created, the script
+# reports success, and every lookup falls through to the upstream resolver. That
+# is easy to miss when the domain is real and public DNS answers anyway.
+#
+# Note this SETS dns.hosts rather than appending. These records are the lab's
+# authoritative local set; edit RECORDS above to change them.
+if [[ -f "$PIHOLE_V6_CONFIG" ]] && command -v pihole-FTL >/dev/null 2>&1; then
+    info "Pi-hole v6 detected. Writing records to dns.hosts in pihole.toml."
+    echo ""
+
+    ENTRIES=()
+    for record in "${RECORDS[@]}"; do
+        hostname=$(echo "$record" | awk '{print $1}')
+        ip=$(echo "$record" | awk '{print $2}')
+        ENTRIES+=("\"${ip} ${hostname}\"")
+        printf "  ${GREEN}SET${RESET}   %s → %s\n" "$hostname" "$ip"
+    done
+
+    JOINED=$(IFS=,; echo "${ENTRIES[*]}")
+    pihole-FTL --config dns.hosts "[ ${JOINED} ]" >/dev/null \
+        || die "Failed to write dns.hosts via pihole-FTL."
+
+    echo ""
+    ok "Records written to dns.hosts (${#RECORDS[@]} entries)."
+    echo ""
+
+    info "Reloading Pi-hole DNS..."
+    pihole reloaddns >/dev/null 2>&1 || pihole restartdns reload >/dev/null 2>&1 || true
+    ok "Pi-hole DNS reloaded."
+    echo ""
+
+    V6_HANDLED=true
 else
-    info "${CUSTOM_LIST} does not exist, it will be created."
-    touch "$CUSTOM_LIST"
+    V6_HANDLED=false
 fi
-echo ""
 
-# ─── Add records (idempotent) ─────────────────────────────────────────────────
-info "Adding DNS records..."
-echo ""
-ADDED=0
-SKIPPED=0
+# ─── Pi-hole v5 path: custom.list ────────────────────────────────────────────
+# Skipped entirely on v6, where the records were already written to dns.hosts.
+if [[ "$V6_HANDLED" == false ]]; then
 
-for record in "${RECORDS[@]}"; do
-    # Read whitespace-separated: IP is last field, everything before is hostname
-    hostname=$(echo "$record" | awk '{print $1}')
-    ip=$(echo "$record" | awk '{print $2}')
-
-    # Skip if this exact hostname→IP mapping already exists
-    if grep -qP "^${ip}\s+${hostname}$" "$CUSTOM_LIST" 2>/dev/null; then
-        printf "  ${YELLOW}SKIP${RESET}  %s → %s  (already present)\n" "$hostname" "$ip"
-        (( SKIPPED++ )) || true
+    if [[ -f "$CUSTOM_LIST" ]]; then
+        BACKUP="${CUSTOM_LIST}.bak.$(date +%Y%m%d%H%M%S)"
+        info "Backing up ${CUSTOM_LIST} → ${BACKUP}"
+        cp "$CUSTOM_LIST" "$BACKUP"
+        ok "Backup created."
     else
-        echo "${ip} ${hostname}" >> "$CUSTOM_LIST"
-        printf "  ${GREEN}ADD${RESET}   %s → %s\n" "$hostname" "$ip"
-        (( ADDED++ )) || true
+        info "${CUSTOM_LIST} does not exist, it will be created."
+        touch "$CUSTOM_LIST"
     fi
-done
+    echo ""
 
-echo ""
-ok "Records processed: ${ADDED} added, ${SKIPPED} skipped."
-echo ""
+    info "Adding DNS records..."
+    echo ""
+    ADDED=0
+    SKIPPED=0
 
-# ─── Reload Pi-hole DNS ───────────────────────────────────────────────────────
-info "Reloading Pi-hole DNS..."
-pihole restartdns reload
-ok "Pi-hole DNS reloaded."
-echo ""
+    for record in "${RECORDS[@]}"; do
+        # Read whitespace-separated: IP is last field, everything before is hostname
+        hostname=$(echo "$record" | awk '{print $1}')
+        ip=$(echo "$record" | awk '{print $2}')
+
+        # Skip if this exact hostname→IP mapping already exists
+        if grep -qP "^${ip}\s+${hostname}$" "$CUSTOM_LIST" 2>/dev/null; then
+            printf "  ${YELLOW}SKIP${RESET}  %s → %s  (already present)\n" "$hostname" "$ip"
+            (( SKIPPED++ )) || true
+        else
+            echo "${ip} ${hostname}" >> "$CUSTOM_LIST"
+            printf "  ${GREEN}ADD${RESET}   %s → %s\n" "$hostname" "$ip"
+            (( ADDED++ )) || true
+        fi
+    done
+
+    echo ""
+    ok "Records processed: ${ADDED} added, ${SKIPPED} skipped."
+    echo ""
+
+    info "Reloading Pi-hole DNS..."
+    pihole restartdns reload
+    ok "Pi-hole DNS reloaded."
+    echo ""
+
+fi
 
 # ─── Verify resolution ────────────────────────────────────────────────────────
 info "Verifying DNS resolution via 127.0.0.1..."
