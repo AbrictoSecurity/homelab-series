@@ -26,6 +26,10 @@ Update this file whenever a new service is added.
 | admin-internal.yourname-lab.com | 10.10.10.10 | Internal | Internal admin LXC (CT 110, Debian 12) | 2 |
 | pihole.yourname-lab.com | 10.10.10.2 | Internal | Pi-hole DNS resolver | 3 |
 | dc01.corp.yourname-lab.com | 10.10.10.3 | Internal | Samba Active Directory DC | 3 |
+| docker.yourname-lab.com | 10.10.10.4 | Internal | Docker VM (VM 103), Docker CE + Portainer | 4 |
+| kali.yourname-lab.com | 10.10.10.20 | Internal | Kali VM (VM 200), testing interface | 4 |
+| kali.yourname-lab.com | 10.20.20.20 | DMZ | Kali VM (VM 200), RDP interface | 4 |
+| dvwa | 10.20.20.30 | DMZ | DVWA practice target (CT 104), intentionally vulnerable | 4 |
 
 ---
 
@@ -53,7 +57,7 @@ Update this file whenever a new service is added.
 
 ---
 
-## DNS Records (Pi-hole Custom DNS)
+## DNS Records (Pi-hole Local DNS)
 
 | Hostname | IP | Type |
 |----------|----|------|
@@ -62,6 +66,9 @@ Update this file whenever a new service is added.
 | admin-internal.yourname-lab.com | 10.10.10.10 | A |
 | pihole.yourname-lab.com | 10.10.10.2 | A |
 | dc01.corp.yourname-lab.com | 10.10.10.3 | A |
+| docker.yourname-lab.com | 10.10.10.4 | A |
+
+> **Pi-hole v5 vs v6.** v5 keeps these in `/etc/pihole/custom.list`. **v6 does not read that file** — local records live in `pihole.toml` under `dns.hosts`, managed with `pihole-FTL --config dns.hosts`. Writing `custom.list` on a v6 install is silently inert. `07-pihole-dns-records.sh` detects the version and writes to the right place.
 
 ---
 
