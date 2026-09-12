@@ -8,7 +8,7 @@
 set -uo pipefail   # deliberately not -e: every check must run, then report
 
 RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'
-CYAN='\033[0;36m'; BOLD='\033[1m'; RESET='\033[0m'
+BOLD='\033[1m'; RESET='\033[0m'
 
 INTERNAL_IP="10.10.10.20"
 INTERNAL_GW="10.10.10.1"
