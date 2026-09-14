@@ -158,6 +158,70 @@ If missing, re-run `12-kali-network.sh`.
 
 ---
 
+## Firewall and access from the management network
+
+**RDP to 10.20.20.20 times out from your workstation.**
+*Symptom points at the wrong layer.* Kali and xrdp are fine; the traffic never gets through OPNsense.
+From the management network it enters OPNsense on **WAN**, and four things must all be true:
+
+1. The workstation, or the home router, routes 10.10.10.0/24 and 10.20.20.0/24 via OPNsense's WAN
+   address. Reserve that address on the home router; WAN takes it from DHCP.
+2. **Interfaces → [WAN] → Block private networks** is unticked. Otherwise every RFC 1918 source is
+   dropped before any rule is read.
+3. The pass rule is on **WAN**, not DMZ. Rules match on the interface a packet enters.
+4. **Firewall → Settings → Advanced → Disable reply-to on WAN rules** is ticked. Otherwise replies
+   are sent via the home router instead of straight back to a client on WAN's subnet.
+
+Find which one with a capture on the Proxmox host while retrying:
+
+```bash
+tcpdump -ni tap100i0 tcp port 3389   # OPNsense WAN NIC: SYNs should arrive here
+tcpdump -ni tap100i2 tcp port 3389   # OPNsense DMZ NIC: nothing here means OPNsense dropped them
+```
+
+No SYNs on the WAN NIC means item 1. SYNs on WAN but none on DMZ means items 2 or 3.
+
+**Internal hosts reach the DMZ despite "Block Internal to DMZ".**
+OPNsense applies the first matching rule. `03-opnsense-configure.sh` creates *HomeLab: Allow Internal
+to WAN* (destination any) before *HomeLab: Block Internal to DMZ*; if the allow sorts first, the block
+never fires. In **Firewall → Rules [new]**, give the block a lower Sequence number, apply, and confirm:
+
+```bash
+pct exec 101 -- timeout 3 bash -c "echo > /dev/tcp/10.20.20.30/80" && echo REACHABLE || echo BLOCKED
+```
+
+**Home devices reach lab addresses without passing through OPNsense.**
+The physical NICs behind vmbr2 or vmbr3 are cabled to the home switch, which joins those bridges to
+the home network at layer 2. Unplug them unless they go to a dedicated switch. On the Proxmox host
+this should print nothing:
+
+```bash
+bridge fdb show br vmbr3 | grep -v -e permanent -e tap -e veth
+```
+
+**The OPNsense web UI does not load from your workstation.**
+It listens on the Internal address, 10.10.10.1, which the management network cannot reach until the
+routes and rules above exist. Tunnel through the Proxmox host, which has a leg on vmbr2:
+
+```bash
+ssh -N -L 8443:10.10.10.1:443 root@192.168.1.100
+```
+
+Then browse to `https://localhost:8443`.
+
+**The OPNsense dashboard renders blank, or the console reports "write failed, filesystem is full".**
+Check disk before anything else, from the console shell: `df -h /`. Proxmox showing OPNsense's memory
+as fully used is not the cause: without a guest agent it reports the whole allocation. To grow the
+disk, `qm resize 100 scsi0 +16G` on the host; inside OPNsense the swap partition sits after rootfs, so
+swap must be deleted and recreated at the end before `gpart resize` and `growfs /`. Then find what
+filled it, or the extra space goes the same way:
+
+```bash
+du -xhd 1 /var 2>/dev/null | sort -h | tail -8
+```
+
+---
+
 ## Docker VM
 
 **Docker installs but containers will not start.**
