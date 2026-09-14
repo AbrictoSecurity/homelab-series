@@ -24,6 +24,11 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 
 [[ $EUID -ne 0 ]] && die "Must be run as root inside the Kali VM. Try: sudo bash $0"
 command -v apt-get &>/dev/null || die "apt-get not found. This script targets Kali/Debian."
+# Proxmox is Debian too, so the apt-get check alone would let this install xrdp
+# on the hypervisor.
+if command -v pveversion &>/dev/null || [[ -d /etc/pve ]]; then
+    die "This is the Proxmox host. Run 13-kali-rdp.sh inside the Kali VM."
+fi
 
 echo ""
 echo -e "${BOLD}Abricto HomeLab - Kali RDP Access (DMZ interface only)${RESET}"

@@ -2,7 +2,7 @@
 # Script: 14-kali-verify.sh
 # Description: Verify the dual-homed Kali build: addressing, policy routing, DNS, services, RDP binding
 # Blog post: https://abrictosecurity.com/homelab-series-docker-kali-dvwa/
-# Usage: bash 14-kali-verify.sh
+# Usage: sudo LAB_DOMAIN=example.com bash 14-kali-verify.sh   (inside the Kali VM, not on the Proxmox host)
 # Dependencies: iproute2, iputils-ping, dnsutils, netcat-openbsd
 
 set -uo pipefail   # deliberately not -e: every check must run, then report
@@ -22,7 +22,7 @@ DOCKER_VM="10.10.10.4"
 OPNSENSE="10.10.10.1"
 
 # The series uses yourname-lab.com as a stand-in. Override for a real lab:
-#   LAB_DOMAIN=example.com bash 14-kali-verify.sh
+#   sudo LAB_DOMAIN=example.com bash 14-kali-verify.sh
 DOMAIN="${LAB_DOMAIN:-yourname-lab.com}"
 AD_REALM="${AD_REALM:-corp.${DOMAIN}}"
 RDP_PORT="3389"
@@ -35,6 +35,25 @@ skip() { echo -e "  ${YELLOW}[SKIP]${RESET} $1"; SKIP=$((SKIP + 1)); }
 section() { echo ""; echo -e "${BOLD}$1${RESET}"; }
 
 have() { command -v "$1" &>/dev/null; }
+
+# This runs inside the Kali VM. On the Proxmox host every addressing, routing and
+# RDP check inspects the hypervisor instead, and fails in a way that looks like a
+# broken Kali build.
+if have pveversion || [[ -d /etc/pve ]]; then
+    echo -e "${RED}[ERROR]${RESET} This is the Proxmox host. Run 14-kali-verify.sh inside the Kali VM." >&2
+    echo "  In a Kali terminal:  sudo LAB_DOMAIN=${DOMAIN} bash 14-kali-verify.sh" >&2
+    echo "  From this host:      qm guest exec 200 --pass-stdin 1 -- /usr/bin/env LAB_DOMAIN=${DOMAIN} bash -s < 14-kali-verify.sh" >&2
+    exit 2
+fi
+
+# arping needs CAP_NET_RAW. As a normal user it fails silently, the check falls
+# back to ICMP, and OPNsense does not answer ping on an interface with no rules,
+# so a healthy DMZ gateway reports as down. ss also hides the xrdp process name.
+if [[ $EUID -ne 0 ]]; then
+    echo -e "${RED}[ERROR]${RESET} Must be run as root:" >&2
+    echo "  sudo LAB_DOMAIN=${DOMAIN} bash $0" >&2
+    exit 2
+fi
 
 echo ""
 echo -e "${BOLD}Abricto HomeLab - Kali Build Verification${RESET}"

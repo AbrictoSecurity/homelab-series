@@ -91,7 +91,7 @@ Troubleshooting for Post 4: [docs/post-04-troubleshooting.md](docs/post-04-troub
 | `scripts/kali/11-kali-vm-import.sh` | 4 | Verifies and imports Kali's official prebuilt QEMU image as a dual-homed VM; GPG-verifies the signed checksums before use | `bash 11-kali-vm-import.sh` |
 | `scripts/kali/12-kali-network.sh` | 4 | Dual-homed static addressing plus source-based policy routing on the Kali VM | `sudo bash 12-kali-network.sh [internal_if] [dmz_if]` |
 | `scripts/kali/13-kali-rdp.sh` | 4 | Installs xrdp and binds it to the DMZ interface only | `sudo bash 13-kali-rdp.sh` |
-| `scripts/kali/14-kali-verify.sh` | 4 | Verifies the whole build: addressing, policy routing, DNS, services, RDP binding. Non-zero exit on failure | `LAB_DOMAIN=example.com bash 14-kali-verify.sh` |
+| `scripts/kali/14-kali-verify.sh` | 4 | Verifies the whole build: addressing, policy routing, DNS, services, RDP binding. Run as root inside the Kali VM; non-zero exit on failure | `sudo LAB_DOMAIN=example.com bash 14-kali-verify.sh` |
 | `scripts/targets/15-dvwa-lxc.sh` | 4 | Creates a DVWA practice target in the DMZ. Refuses the management and WAN bridges | `sudo bash 15-dvwa-lxc.sh` |
 
 ---
