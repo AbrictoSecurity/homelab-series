@@ -50,7 +50,7 @@ echo ""
 echo -e "${BOLD}Available storage pools (LXC-capable):${RESET}"
 echo ""
 mapfile -t POOL_LIST < <(pvesm status --content rootdir 2>/dev/null \
-    | awk 'NR>1 && $2=="active" {print $1}')
+    | awk 'NR>1 && $3=="active" {print $1}')
 
 [[ ${#POOL_LIST[@]} -eq 0 ]] && die "No active storage pools found that support LXC rootfs."
 
@@ -186,10 +186,48 @@ info "Installing Pi-hole (unattended)..."
 warn "This may take 2–4 minutes. The installer downloads Pi-hole from GitHub."
 echo ""
 
+# The Debian 12 template ships without curl, and piping a failed download into
+# bash hides that completely. The inner shell has no pipefail, so curl exiting
+# 127 followed by bash reading empty stdin and exiting 0 makes the pipeline
+# succeed. The outer 'set -euo pipefail' therefore sees nothing wrong and the
+# script cheerfully reports an installation that never happened, leaving a bare
+# container behind. Install curl first, download to a file, verify the file is
+# non-empty, run it, then confirm the binary actually exists.
+# --unattended alone is not enough on a brand new container. The installer sets
+# fresh_install=true unless /etc/pihole/pihole.toml or /etc/pihole/setupVars.conf
+# already exists, and it only honours --unattended when fresh_install is false.
+# On a genuinely fresh install it runs welcomeDialogs() regardless of the flag,
+# hits the "Static IP Needed" dialog, reads EOF from a non-interactive stdin and
+# exits 1 with "Installer exited at static IP message."
+#
+# Pre-seeding setupVars.conf is what makes the unattended path actually engage.
 pct exec "${CTID}" -- bash -c "
-  curl -sSL https://install.pi-hole.net \
-    | PIHOLE_SKIP_OS_CHECK=true bash /dev/stdin --unattended
-"
+  set -euo pipefail
+  export DEBIAN_FRONTEND=noninteractive
+  apt-get install -y -qq curl ca-certificates
+  install -d -m 755 /etc/pihole
+  printf '%s\n' \
+    'PIHOLE_INTERFACE=eth0' \
+    'PIHOLE_DNS_1=1.1.1.1' \
+    'PIHOLE_DNS_2=1.0.0.1' \
+    'QUERY_LOGGING=true' \
+    'INSTALL_WEB_SERVER=true' \
+    'INSTALL_WEB_INTERFACE=true' \
+    'LIGHTTPD_ENABLED=true' \
+    'CACHE_SIZE=10000' \
+    'DNS_FQDN_REQUIRED=true' \
+    'DNS_BOGUS_PRIV=true' \
+    'DNSMASQ_LISTENING=local' \
+    'BLOCKING_ENABLED=true' \
+    > /etc/pihole/setupVars.conf
+  curl -fsSL https://install.pi-hole.net -o /tmp/pihole-install.sh
+  [[ -s /tmp/pihole-install.sh ]] || { echo 'Pi-hole installer download failed' >&2; exit 1; }
+  PIHOLE_SKIP_OS_CHECK=true bash /tmp/pihole-install.sh --unattended
+  rm -f /tmp/pihole-install.sh
+" || die "Pi-hole installation failed inside CT ${CTID}. Inspect: pct exec ${CTID} -- bash"
+
+pct exec "${CTID}" -- bash -lc "command -v pihole >/dev/null 2>&1" \
+    || die "Installer finished but the 'pihole' binary is missing in CT ${CTID}."
 
 echo ""
 ok "Pi-hole installed."

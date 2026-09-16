@@ -59,7 +59,7 @@ echo ""
 echo -e "${BOLD}Available storage pools (LXC-capable):${RESET}"
 echo ""
 mapfile -t POOL_LIST < <(pvesm status --content rootdir 2>/dev/null \
-    | awk 'NR>1 && $2=="active" {print $1}')
+    | awk 'NR>1 && $3=="active" {print $1}')
 
 [[ ${#POOL_LIST[@]} -eq 0 ]] && die "No active storage pools found that support LXC rootfs."
 
